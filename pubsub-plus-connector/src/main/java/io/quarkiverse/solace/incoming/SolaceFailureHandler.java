@@ -30,8 +30,7 @@ class SolaceFailureHandler {
         if (metadata != null) {
             outcome = metadata.get(SettleMetadata.class)
                     .map(SettleMetadata::getOutcome)
-                    .orElseGet(() -> messageOutCome != null ? messageOutCome
-                            : MessageAcknowledgementConfiguration.Outcome.FAILED /* TODO get outcome from reason */);
+                    .orElseGet(() -> messageOutCome /* TODO get outcome from reason */);
         } else {
             outcome = messageOutCome != null ? messageOutCome
                     : MessageAcknowledgementConfiguration.Outcome.FAILED;
