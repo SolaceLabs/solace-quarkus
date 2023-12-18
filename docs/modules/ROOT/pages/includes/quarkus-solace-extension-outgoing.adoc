@@ -1,0 +1,133 @@
+
+:summaryTableId: quarkus-solace-extension-outgoing
+Outgoing configuration for Solace Quarkus Extension
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[[quarkus-solace_configuration_outgoing]]link:#quarkus-solace_configuration_outgoing[Configuration property]
+
+h|Type
+h|Default
+
+a| [[quarkus-solace_quarkus.producer.topic]]`link:#quarkus-solace_quarkus.producer.topic[producer.topic]`
+
+
+[.description]
+--
+The topic to publish messages, by default the channel name.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_METRICS_ENABLED+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_METRICS_ENABLED+++`
+// endif::add-copy-button-to-env-var[]
+--|string
+|
+
+
+a| [[quarkus-solace_quarkus.producer.max-inflight-messages]]`link:#quarkus-solace_quarkus.producer.max-inflight-messages[producer.max-inflight-messages]`
+
+
+[.description]
+--
+The maximum number of messages to be written to Solace broker. It limits the number of messages waiting to be written and acknowledged by the broker. You can set this attribute to `0` remove the limit.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_HEALTH_ENABLED+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_HEALTH_ENABLED+++`
+// endif::add-copy-button-to-env-var[]
+--|long
+|`1024`
+
+
+a| [[quarkus-solace_quarkus.producer.waitForPublishReceipt]]`link:#quarkus-solace_quarkus.producer.waitForPublishReceipt[producer.waitForPublishReceipt]`
+
+
+[.description]
+--
+Whether the client waits to receive the publish receipt from Solace broker before acknowledging the message.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_ENABLED+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_ENABLED+++`
+// endif::add-copy-button-to-env-var[]
+--|boolean
+|`true`
+
+
+a| [[quarkus-solace_quarkus.producer.delivery.ack.timeout]]`link:#quarkus-solace_quarkus.producer.delivery.ack.timeout[producer.delivery.ack.timeout]`
+
+
+[.description]
+--
+Timeout to receive the publish receipt from broker.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_IMAGE_NAME+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_IMAGE_NAME+++`
+// endif::add-copy-button-to-env-var[]
+--|integer
+|
+
+
+a| [[quarkus-solace_quarkus.producer.delivery.ack.window.size]]`link:#quarkus-solace_quarkus.producer.delivery.ack.window.size[producer.delivery.ack.window.size]`
+
+
+[.description]
+--
+Publish Window will determine the maximum number of messages the application can send before the Solace API must receive an acknowledgment from the Solace.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_SHARED+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_SHARED+++`
+// endif::add-copy-button-to-env-var[]
+--|integer
+|
+
+
+a| [[quarkus-solace_quarkus.producer.back-pressure.strategy]]`link:#quarkus-solace_quarkus.producer.back-pressure.strategy[producer.back-pressure.strategy]`
+
+
+[.description]
+--
+It is possible for the client application to publish messages more quickly than the API can send them to the broker due to network congestion or connectivity issues. This delay can cause the internal buffer to accumulate messages until it reaches its capacity, preventing the API from storing any more messages.
+
+Supported strategies `reject`, `elastic`, `wait`. Refer to `https://docs.solace.com/API/API-Developer-Guide-Java/Java-PM-Publish.htm#Configuring-Back-Pressure[link]`.
+
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_SERVICE_NAME+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_SERVICE_NAME+++`
+// endif::add-copy-button-to-env-var[]
+--|string
+|`reject`
+
+
+a| [[quarkus-solace_quarkus.producer.back-pressure.buffer-capacity]]`link:#quarkus-solace_quarkus.producer.back-pressure.buffer-capacity[producer.back-pressure.buffer-capacity]`
+
+
+[.description]
+--
+Outgoing messages backpressure buffer capacity.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_HOST+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_HOST+++`
+// endif::add-copy-button-to-env-var[]
+--|integer
+|`1024`
+
+|===
