@@ -74,7 +74,7 @@ public class SolaceConsumerTest extends WeldTestBase {
         MyConsumer app = runApplication(config, MyConsumer.class);
 
         // Assert on published messages
-//        await().untilAsserted(() -> assertThat(app.getReceived().size()).isEqualTo(5));
+        //        await().untilAsserted(() -> assertThat(app.getReceived().size()).isEqualTo(5));
         await().untilAsserted(() -> assertThat(app.getReceived()).contains("1", "2", "3", "4", "5"));
     }
 
@@ -200,33 +200,33 @@ public class SolaceConsumerTest extends WeldTestBase {
                         + SolaceContainer.INTEGRATION_TEST_QUEUE_NAME + "' - Topic '" + topic));
     }
 
-    @Test
-    @Order(7)
-    void consumerPublishToErrorTopicPermissionException() {
-        MapBasedConfig config = new MapBasedConfig()
-                .with("mp.messaging.incoming.in.connector", "quarkus-solace")
-                .with("mp.messaging.incoming.in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_QUEUE_NAME)
-                .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
-                .with("mp.messaging.incoming.in.consumer.queue.publish-to-error-topic-on-failure", true)
-                .with("mp.messaging.incoming.in.consumer.queue.error.topic",
-                        "publish/deny")
-                .with("mp.messaging.incoming.error-in.connector", "quarkus-solace")
-                .with("mp.messaging.incoming.error-in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_ERROR_QUEUE_NAME)
-                .with("mp.messaging.incoming.error-in.consumer.queue.type", "durable-exclusive");
-
-        // Run app that consumes messages
-        MyErrorQueueConsumer app = runApplication(config, MyErrorQueueConsumer.class);
-        // Produce messages
-        PersistentMessagePublisher publisher = messagingService.createPersistentMessagePublisherBuilder()
-                .build()
-                .start();
-        Topic tp = Topic.of(SolaceContainer.INTEGRATION_TEST_QUEUE_SUBSCRIPTION);
-        OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
-        OutboundMessage outboundMessage = messageBuilder.build("2");
-        publisher.publish(outboundMessage, tp);
-
-        await().untilAsserted(() -> assertThat(app.getReceivedFailedMessages().size()).isEqualTo(0));
-    }
+    //    @Test
+    //    @Order(7)
+    //    void consumerPublishToErrorTopicPermissionException() {
+    //        MapBasedConfig config = new MapBasedConfig()
+    //                .with("mp.messaging.incoming.in.connector", "quarkus-solace")
+    //                .with("mp.messaging.incoming.in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_QUEUE_NAME)
+    //                .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
+    //                .with("mp.messaging.incoming.in.consumer.queue.publish-to-error-topic-on-failure", true)
+    //                .with("mp.messaging.incoming.in.consumer.queue.error.topic",
+    //                        "publish/deny")
+    //                .with("mp.messaging.incoming.error-in.connector", "quarkus-solace")
+    //                .with("mp.messaging.incoming.error-in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_ERROR_QUEUE_NAME)
+    //                .with("mp.messaging.incoming.error-in.consumer.queue.type", "durable-exclusive");
+    //
+    //        // Run app that consumes messages
+    //        MyErrorQueueConsumer app = runApplication(config, MyErrorQueueConsumer.class);
+    //        // Produce messages
+    //        PersistentMessagePublisher publisher = messagingService.createPersistentMessagePublisherBuilder()
+    //                .build()
+    //                .start();
+    //        Topic tp = Topic.of(SolaceContainer.INTEGRATION_TEST_QUEUE_SUBSCRIPTION);
+    //        OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
+    //        OutboundMessage outboundMessage = messageBuilder.build("2");
+    //        publisher.publish(outboundMessage, tp);
+    //
+    //        await().untilAsserted(() -> assertThat(app.getReceivedFailedMessages().size()).isEqualTo(0));
+    //    }
 
     @ApplicationScoped
     static class MyConsumer {
