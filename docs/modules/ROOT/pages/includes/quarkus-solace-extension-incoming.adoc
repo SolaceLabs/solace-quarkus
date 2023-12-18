@@ -1,0 +1,293 @@
+
+:summaryTableId: quarkus-solace-extension-incoming
+Incoming configuration for Solace Quarkus Extension
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[[quarkus-solace_configuration_incoming]]link:#quarkus-solace_configuration_incoming[Configuration property]
+
+h|Type
+h|Default
+
+a| [[quarkus-solace_quarkus.consumer.queue.name]]`link:#quarkus-solace_quarkus.consumer.queue.name[consumer.queue.name]`
+
+
+[.description]
+--
+The queue name of receiver.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_METRICS_ENABLED+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_METRICS_ENABLED+++`
+// endif::add-copy-button-to-env-var[]
+--|string
+|
+
+
+a| [[quarkus-solace_quarkus.consumer.queue.type]]`link:#quarkus-solace_quarkus.consumer.queue.type[consumer.queue.type]`
+
+
+[.description]
+--
+The queue type of receiver.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_HEALTH_ENABLED+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_HEALTH_ENABLED+++`
+// endif::add-copy-button-to-env-var[]
+--|string
+|`durable-non-exclusive`
+
+
+a| [[quarkus-solace_quarkus.consumer.queue.missing-resource-creation-strategy]]`link:#quarkus-solace_quarkus.consumer.queue.missing-resource-creation-strategy[consumer.queue.missing-resource-creation-strategy]`
+
+
+[.description]
+--
+Create resources on broker if not available. When set to `create-on-start` the extension provision the queue on broker and also sets the queue type and any subscriptions if configured.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_ENABLED+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_ENABLED+++`
+// endif::add-copy-button-to-env-var[]
+--|string
+|`do-not-create`
+
+
+a| [[quarkus-solace_quarkus.consumer.queue.add-additional-subscriptions]]`link:#quarkus-solace_quarkus.consumer.queue.add-additional-subscriptions[consumer.queue.add-additional-subscriptions]`
+
+
+[.description]
+--
+Whether to add configured subscriptions to queue. Will fail if permissions to configure subscriptions is not allowed on broker.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_IMAGE_NAME+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_IMAGE_NAME+++`
+// endif::add-copy-button-to-env-var[]
+--|boolean
+|`false`
+
+
+a| [[quarkus-solace_quarkus.consumer.queue.subscriptions]]`link:#quarkus-solace_quarkus.consumer.queue.subscriptions[consumer.queue.subscriptions]`
+
+
+[.description]
+--
+The comma separated list of subscriptions, the channel name if empty. This configuration is considered if `consumer.queue.add-additional-subscriptions` is set to true.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_SHARED+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_SHARED+++`
+// endif::add-copy-button-to-env-var[]
+--|string
+|
+
+
+a| [[quarkus-solace_quarkus.consumer.queue.selector-query]]`link:#quarkus-solace_quarkus.consumer.queue.selector-query[quarkus.consumer.queue.selector-query]`
+
+
+[.description]
+--
+The receiver selector query. If configured, broker will filter messages using this condition.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_SERVICE_NAME+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_SERVICE_NAME+++`
+// endif::add-copy-button-to-env-var[]
+--|string
+|
+
+
+a| [[quarkus-solace_quarkus.consumer.queue.replay.strategy]]`link:#quarkus-solace_quarkus.consumer.queue.replay.strategy[consumer.queue.replay.strategy]`
+
+
+[.description]
+--
+The receiver replay strategy. Supported values `all-messages`, `time-based`, `replication-group-message-id`.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_HOST+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_HOST+++`
+// endif::add-copy-button-to-env-var[]
+--|string
+|
+
+
+a| [[quarkus-solace_quarkus.consumer.queue.replay.timebased-start-time]]`link:#quarkus-solace_quarkus.consumer.queue.replay.timebased-start-time[consumer.queue.replay.timebased-start-time]`
+
+
+[.description]
+--
+The receiver replay timebased start time. Set this value if `consumer.queue.replay.strategy` is `time-based`.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_VPN+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_VPN+++`
+// endif::add-copy-button-to-env-var[]
+--|string
+|
+
+
+a| [[quarkus-solace_quarkus.consumer.queue.replay.replication-group-message-id]]`link:#quarkus-solace_quarkus.consumer.queue.replay.replication-group-message-id[quarkus.consumer.queue.replay.replication-group-message-id]`
+
+
+[.description]
+--
+The receiver replay replication group message id.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_CONTAINER_ENV+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_CONTAINER_ENV+++`
+// endif::add-copy-button-to-env-var[]
+--|`string`
+|
+
+
+a| [[quarkus-solace_quarkus.consumer.queue.polled-wait-time-in-millis]]`link:#quarkus-solace_quarkus.consumer.queue.polled-wait-time-in-millis[consumer.queue.polled-wait-time-in-millis]`
+
+
+[.description]
+--
+Maximum wait time in milliseconds for consumers to receive a message from configured queue.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE+++`
+// endif::add-copy-button-to-env-var[]
+--|`integer`
+| 100
+
+a| [[quarkus-solace_quarkus.consumer.queue.discard-messages-on-failure]]`link:#quarkus-solace_quarkus.consumer.queue.discard-messages-on-failure[consumer.queue.discard-messages-on-failure]`
+
+
+[.description]
+--
+Whether discard messages from queue on failure. A negative acknowledgment of type REJECTED is sent to broker which discards the messages from queue and will move to DMQ if enabled. This option works only when enable-nacks is true and error topic is not configured.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE+++`
+// endif::add-copy-button-to-env-var[]
+--|`boolean`
+| false
+
+a| [[quarkus-solace_quarkus.consumer.queue.publish-to-error-topic-on-failure]]`link:#quarkus-solace_quarkus.consumer.queue.publish-to-error-topic-on-failure[consumer.queue.publish-to-error-topic-on-failure]`
+
+
+[.description]
+--
+Whether to publish consumed message to error topic on failure.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE+++`
+// endif::add-copy-button-to-env-var[]
+--|`boolean`
+| false
+
+a| [[quarkus-solace_quarkus.consumer.queue.error.topic]]`link:#quarkus-solace_quarkus.consumer.queue.error.topic[consumer.queue.error.topic]`
+
+
+[.description]
+--
+The error topic where message should be published in case of error.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE+++`
+// endif::add-copy-button-to-env-var[]
+--|`string`
+|
+
+a| [[quarkus-solace_quarkus.consumer.queue.error.message.dmq-eligible]]`link:#quarkus-solace_quarkus.consumer.queue.error.message.dmq-eligible[consumer.queue.error.message.dmq-eligible]`
+
+
+[.description]
+--
+Whether error message is eligible to move to dead message queue.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE+++`
+// endif::add-copy-button-to-env-var[]
+--|`boolean`
+| `false`
+
+a| [[quarkus-solace_quarkus.consumer.queue.error.message.ttl]]`link:#quarkus-solace_quarkus.consumer.queue.error.message.ttl[consumer.queue.error.message.ttl]`
+
+
+[.description]
+--
+TTL for Error message before moving to dead message queue.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE+++`
+// endif::add-copy-button-to-env-var[]
+--|`long`
+| `null`
+
+a| [[quarkus-solace_quarkus.consumer.queue.error.message.max-delivery-attempts]]`link:#quarkus-solace_quarkus.consumer.queue.error.message.max-delivery-attempts[consumer.queue.error.message.max-delivery-attempts]`
+
+
+[.description]
+--
+Maximum number of attempts to send a failed message to the error topic in case of failure. Each attempt will have a backoff interval of 1 second. When all delivery attempts have been exhausted, the failed message will be requeued on the queue for redelivery.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE+++`
+// endif::add-copy-button-to-env-var[]
+--|`int`
+| `3`
+
+a| [[quarkus-solace_quarkus.consumer.queue.enable-nacks]]`link:#quarkus-solace_quarkus.consumer.queue.enable-nacks[consumer.queue.enable-nacks]`
+
+
+[.description]
+--
+Whether to enable negative acknowledgments on failed messages. Nacks are supported on event brokers 10.2.1 and later. If an event broker does not support Nacks, an exception is thrown.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE+++`
+// endif::add-copy-button-to-env-var[]
+--|`boolean`
+| `false`
+
+|===

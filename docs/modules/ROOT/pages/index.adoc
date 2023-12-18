@@ -2,7 +2,8 @@
 
 include::./includes/attributes.adoc[]
 
-TIP: Describe what the extension does here.
+TIP: Solace Quarkus Extension for integrating with Solace PubSub+ message brokers. The extension provides the ability to publish or consume events from event mesh.
+
 
 == Installation
 
@@ -25,3 +26,13 @@ For instance, with Maven, add the following dependency to your POM file:
 TIP: Remove this section if you don't have Quarkus configuration properties in your extension.
 
 include::includes/quarkus-solace.adoc[leveloffset=+1, opts=optional]
+
+[[extension-incoming-configuration-reference]]
+== Incoming Configuration Reference
+
+include::includes/quarkus-solace-extension-incoming.adoc[leveloffset=+1, opts=optional]
+
+[[extension-outgoing-configuration-reference]]
+== Outgoing Configuration Reference
+
+include::includes/quarkus-solace-extension-outgoing.adoc[leveloffset=+1, opts=optional]
