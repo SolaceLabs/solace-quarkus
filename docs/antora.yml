@@ -1,0 +1,5 @@
+name: quarkus-solace
+title: Quarkus Solace
+version: dev
+nav:
+  - modules/ROOT/nav.adoc
