@@ -45,26 +45,26 @@ public class HelloConsumer {
      *
      * @param p
      */
-    @Incoming("dynamic-destination-in")
-    @Outgoing("dynamic-destination-out")
-    @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    Message<?> consumeAndPublishToDynamicTopic(SolaceInboundMessage<?> p) {
-        Log.infof("Received message: %s", new String(p.getMessage().getPayloadAsBytes(), StandardCharsets.UTF_8));
-        SolaceOutboundMetadata outboundMetadata = SolaceOutboundMetadata.builder()
-                .setApplicationMessageId("test").setDynamicDestination("hello/foobar/" + p.getMessage().getSenderId()) // make sure senderId is available on incoming message
-                .createPubSubOutboundMetadata();
-        Message<?> outboundMessage = Message.of(p.getPayload(), Metadata.of(outboundMetadata), () -> {
-            CompletableFuture completableFuture = new CompletableFuture();
-            p.ack();
-            completableFuture.complete(null);
-            return completableFuture;
-        }, (throwable) -> {
-            CompletableFuture completableFuture = new CompletableFuture();
-            p.nack(throwable, p.getMetadata());
-            completableFuture.complete(null);
-            return completableFuture;
-        });
-        return outboundMessage;
-    }
+    //    @Incoming("dynamic-destination-in")
+    //    @Outgoing("dynamic-destination-out")
+    //    @Acknowledgment(Acknowledgment.Strategy.MANUAL)
+    //    Message<?> consumeAndPublishToDynamicTopic(SolaceInboundMessage<?> p) {
+    //        Log.infof("Received message: %s", new String(p.getMessage().getPayloadAsBytes(), StandardCharsets.UTF_8));
+    //        SolaceOutboundMetadata outboundMetadata = SolaceOutboundMetadata.builder()
+    //                .setApplicationMessageId("test").setDynamicDestination("hello/foobar/" + p.getMessage().getSenderId()) // make sure senderId is available on incoming message
+    //                .createPubSubOutboundMetadata();
+    //        Message<?> outboundMessage = Message.of(p.getPayload(), Metadata.of(outboundMetadata), () -> {
+    //            CompletableFuture completableFuture = new CompletableFuture();
+    //            p.ack();
+    //            completableFuture.complete(null);
+    //            return completableFuture;
+    //        }, (throwable) -> {
+    //            CompletableFuture completableFuture = new CompletableFuture();
+    //            p.nack(throwable, p.getMetadata());
+    //            completableFuture.complete(null);
+    //            return completableFuture;
+    //        });
+    //        return outboundMessage;
+    //    }
 
 }

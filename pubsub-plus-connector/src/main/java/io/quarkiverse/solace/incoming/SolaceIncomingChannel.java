@@ -46,7 +46,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     private long waitTimeout = -1;
 
     // Assuming we won't ever exceed the limit of an unsigned long...
-    private final UnsignedCounterBarrier unacknowledgedMessageTracker = new UnsignedCounterBarrier();
+    private final IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker = new IncomingMessagesUnsignedCounterBarrier();
 
     public SolaceIncomingChannel(Vertx vertx, SolaceConnectorIncomingConfiguration ic, MessagingService solace) {
         this.channel = ic.getChannel();

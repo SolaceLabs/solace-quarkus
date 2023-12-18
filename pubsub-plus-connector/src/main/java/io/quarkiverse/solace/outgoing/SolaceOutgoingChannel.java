@@ -40,7 +40,7 @@ public class SolaceOutgoingChannel
     private long waitTimeout = -1;
 
     // Assuming we won't ever exceed the limit of an unsigned long...
-    private final UnsignedCounterBarrier publishedMessagesTracker = new UnsignedCounterBarrier();
+    private final OutgoingMessagesUnsignedCounterBarrier publishedMessagesTracker = new OutgoingMessagesUnsignedCounterBarrier();
 
     public SolaceOutgoingChannel(Vertx vertx, SolaceConnectorOutgoingConfiguration oc, MessagingService solace) {
         this.channel = oc.getChannel();

@@ -27,13 +27,13 @@ public class SolaceInboundMessage<T> implements ContextAwareMessage<T>, Metadata
     private final SolaceErrorTopicPublisherHandler solaceErrorTopicPublisherHandler;
     private final SolaceConnectorIncomingConfiguration ic;
     private final T payload;
-    private final UnsignedCounterBarrier unacknowledgedMessageTracker;
+    private final IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker;
 
     private Metadata metadata;
 
     public SolaceInboundMessage(InboundMessage message, SolaceAckHandler ackHandler, SolaceFailureHandler nackHandler,
             SolaceErrorTopicPublisherHandler solaceErrorTopicPublisherHandler,
-            SolaceConnectorIncomingConfiguration ic, UnsignedCounterBarrier unacknowledgedMessageTracker) {
+            SolaceConnectorIncomingConfiguration ic, IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker) {
         this.msg = message;
         this.unacknowledgedMessageTracker = unacknowledgedMessageTracker;
         this.payload = (T) convertPayload();
@@ -103,7 +103,7 @@ public class SolaceInboundMessage<T> implements ContextAwareMessage<T>, Metadata
                     .atMost(ic.getConsumerQueueErrorMessageMaxDeliveryAttempts())
                     .onFailure().transform((throwable -> {
                         SolaceLogging.log.unsuccessfulToTopic(ic.getConsumerQueueErrorTopic().get(), ic.getChannel());
-                        throw new RuntimeException(throwable);
+                        throw new RuntimeException(throwable); // TODO How to catch this exception in tests
                     }))
                     .await().atMost(Duration.ofSeconds(30));
 
@@ -115,14 +115,14 @@ public class SolaceInboundMessage<T> implements ContextAwareMessage<T>, Metadata
 
         MessageAcknowledgementConfiguration.Outcome outcome = ic.getConsumerQueueEnableNacks()
                 && ic.getConsumerQueueDiscardMessagesOnFailure() && solaceErrorTopicPublisherHandler == null
-                        ? MessageAcknowledgementConfiguration.Outcome.REJECTED
-                        : MessageAcknowledgementConfiguration.Outcome.FAILED;
+                        ? MessageAcknowledgementConfiguration.Outcome.REJECTED // will move message to DMQ is enabled on queue & message
+                        : MessageAcknowledgementConfiguration.Outcome.FAILED; // will redeliver the message
         if (outcome == MessageAcknowledgementConfiguration.Outcome.REJECTED) {
             this.unacknowledgedMessageTracker.decrement();
         }
         return ic.getConsumerQueueEnableNacks()
                 ? nackHandler.handle(this, reason, nackMetadata, outcome)
-                : Uni.createFrom().voidItem().subscribeAsCompletionStage();
+                : Uni.createFrom().voidItem().subscribeAsCompletionStage(); // TODO Disconnect and reconnect the receiver in order to redeliver the message. Required when nacks are not supported by the broker version.
     }
 
     @Override

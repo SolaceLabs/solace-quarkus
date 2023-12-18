@@ -9,18 +9,18 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-class UnsignedCounterBarrier {
+class OutgoingMessagesUnsignedCounterBarrier {
     private final AtomicLong counter; // Treated as an unsigned long (i.e. range from 0 -> -1)
     private final Lock awaitLock = new ReentrantLock();
     private final Condition isZero = awaitLock.newCondition();
 
-    private static final Log logger = LogFactory.getLog(UnsignedCounterBarrier.class);
+    private static final Log logger = LogFactory.getLog(OutgoingMessagesUnsignedCounterBarrier.class);
 
-    public UnsignedCounterBarrier(long initialValue) {
+    public OutgoingMessagesUnsignedCounterBarrier(long initialValue) {
         counter = new AtomicLong(initialValue);
     }
 
-    public UnsignedCounterBarrier() {
+    public OutgoingMessagesUnsignedCounterBarrier() {
         this(0);
     }
 
