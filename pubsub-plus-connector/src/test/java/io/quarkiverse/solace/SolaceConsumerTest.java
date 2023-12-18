@@ -7,11 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
 
-import com.solace.messaging.MessagingService;
-import com.solace.messaging.config.profile.ConfigurationProfile;
-import io.quarkiverse.solace.base.MessagingServiceProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -213,7 +209,7 @@ public class SolaceConsumerTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
                 .with("mp.messaging.incoming.in.consumer.queue.publish-to-error-topic-on-failure", true)
                 .with("mp.messaging.incoming.in.consumer.queue.error.topic",
-                       "publish/deny")
+                        "publish/deny")
                 .with("mp.messaging.incoming.error-in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.error-in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_ERROR_QUEUE_NAME)
                 .with("mp.messaging.incoming.error-in.consumer.queue.type", "durable-exclusive");
