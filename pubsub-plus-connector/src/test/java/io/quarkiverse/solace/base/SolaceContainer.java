@@ -107,6 +107,7 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
         updateConfigScript(scriptBuilder, "message-spool message-vpn default");
         updateConfigScript(scriptBuilder, "create queue " + INTEGRATION_TEST_ERROR_QUEUE_NAME);
         updateConfigScript(scriptBuilder, "access-type exclusive");
+        updateConfigScript(scriptBuilder, "respect-ttl");
         updateConfigScript(scriptBuilder, "max-spool-usage 300");
         updateConfigScript(scriptBuilder, "subscription topic " + INTEGRATION_TEST_ERROR_QUEUE_SUBSCRIPTION);
         updateConfigScript(scriptBuilder, "permission all consume");
