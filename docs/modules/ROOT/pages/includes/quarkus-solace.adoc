@@ -1,0 +1,190 @@
+
+:summaryTableId: quarkus-solace
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[[quarkus-solace_configuration]]link:#quarkus-solace_configuration[Configuration property]
+
+h|Type
+h|Default
+
+a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus.solace.metrics.enabled]]`link:#quarkus-solace_quarkus.solace.metrics.enabled[quarkus.solace.metrics.enabled]`
+
+
+[.description]
+--
+Whether a metrics is enabled in case the micrometer is present.
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_METRICS_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_SOLACE_METRICS_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--|boolean 
+|`true`
+
+
+a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus.solace.health.enabled]]`link:#quarkus-solace_quarkus.solace.health.enabled[quarkus.solace.health.enabled]`
+
+
+[.description]
+--
+Whether the liveness health check should be exposed if the smallrye-health extension is present.
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_HEALTH_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_SOLACE_HEALTH_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--|boolean 
+|`true`
+
+
+a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus.solace.devservices.enabled]]`link:#quarkus-solace_quarkus.solace.devservices.enabled[quarkus.solace.devservices.enabled]`
+
+
+[.description]
+--
+If DevServices has been explicitly enabled or disabled. DevServices is generally enabled by default, unless there is an existing configuration present.
+
+When DevServices is enabled Quarkus will attempt to automatically configure and start the Solace broker when running in Dev or Test mode and when Docker is running.
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--|boolean 
+|`true`
+
+
+a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus.solace.devservices.image-name]]`link:#quarkus-solace_quarkus.solace.devservices.image-name[quarkus.solace.devservices.image-name]`
+
+
+[.description]
+--
+The container image name to use, for container based DevServices providers.
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_IMAGE_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_IMAGE_NAME+++`
+endif::add-copy-button-to-env-var[]
+--|string 
+|
+
+
+a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus.solace.devservices.shared]]`link:#quarkus-solace_quarkus.solace.devservices.shared[quarkus.solace.devservices.shared]`
+
+
+[.description]
+--
+Indicates if the Solace broker managed by Quarkus Dev Services is shared. When shared, Quarkus looks for running containers using label-based service discovery. If a matching container is found, it is used, and so a second one is not started. Otherwise, Dev Services for Solace starts a new container.
+
+The discovery uses the `quarkus-dev-service-solace` label. The value is configured using the `service-name` property.
+
+Container sharing is only used in dev mode.
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_SHARED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_SHARED+++`
+endif::add-copy-button-to-env-var[]
+--|boolean 
+|`true`
+
+
+a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus.solace.devservices.service-name]]`link:#quarkus-solace_quarkus.solace.devservices.service-name[quarkus.solace.devservices.service-name]`
+
+
+[.description]
+--
+The value of the `quarkus-dev-service-solace` label attached to the started container. This property is used when `shared` is set to `true`. In this case, before starting a container, Dev Services for Solace looks for a container with the `quarkus-dev-service-solace` label set to the configured value. If found, it will use this container instead of starting a new one. Otherwise, it starts a new container with the `quarkus-dev-service-solace` label set to the specified value.
+
+This property is used when you need multiple shared Solace broker.
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_SERVICE_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_SERVICE_NAME+++`
+endif::add-copy-button-to-env-var[]
+--|string 
+|`solace`
+
+
+a| [[quarkus-solace_quarkus.solace.host]]`link:#quarkus-solace_quarkus.solace.host[quarkus.solace.host]`
+
+
+[.description]
+--
+The Solace host (hostname:port)
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_HOST+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_SOLACE_HOST+++`
+endif::add-copy-button-to-env-var[]
+--|string 
+|required icon:exclamation-circle[title=Configuration property is required]
+
+
+a| [[quarkus-solace_quarkus.solace.vpn]]`link:#quarkus-solace_quarkus.solace.vpn[quarkus.solace.vpn]`
+
+
+[.description]
+--
+The Solace VPN
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_VPN+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_SOLACE_VPN+++`
+endif::add-copy-button-to-env-var[]
+--|string 
+|required icon:exclamation-circle[title=Configuration property is required]
+
+
+a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus.solace.devservices.container-env-container-env]]`link:#quarkus-solace_quarkus.solace.devservices.container-env-container-env[quarkus.solace.devservices.container-env]`
+
+
+[.description]
+--
+Environment variables that are passed to the container.
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_CONTAINER_ENV+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_CONTAINER_ENV+++`
+endif::add-copy-button-to-env-var[]
+--|`Map<String,String>` 
+|
+
+
+a| [[quarkus-solace_quarkus.solace-extra]]`link:#quarkus-solace_quarkus.solace-extra[quarkus.solace]`
+
+
+[.description]
+--
+Any extra parameters to pass to the Solace client
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_SOLACE+++`
+endif::add-copy-button-to-env-var[]
+--|`Map<String,String>` 
+|
+
+|===

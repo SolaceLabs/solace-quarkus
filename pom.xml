@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>io.quarkiverse</groupId>
+    <artifactId>quarkiverse-parent</artifactId>
+    <version>15</version>
+  </parent>
+  <groupId>io.quarkiverse.solace</groupId>
+  <artifactId>quarkus-solace-parent</artifactId>
+  <version>999-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>Quarkus Solace - Parent</name>
+
+  <modules>
+    <module>deployment</module>
+    <module>runtime</module>
+    <module>pubsub-plus-connector</module>
+    <module>docs</module>
+    <module>samples/hello-solace</module>
+    <module>samples/hello-connector-solace</module>
+    <module>integration-tests</module>
+  </modules>
+
+  <scm>
+    <connection>scm:git:git@github.com:quarkiverse/quarkus-solace.git</connection>
+    <developerConnection>scm:git:git@github.com:quarkiverse/quarkus-solace.git</developerConnection>
+    <url>https://github.com/quarkiverse/quarkus-solace</url>
+  </scm>
+
+  <properties>
+    <compiler-plugin.version>3.11.0</compiler-plugin.version>
+    <maven.compiler.release>11</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <quarkus.version>3.2.8.Final</quarkus.version>
+
+    <solace.version>1.4.0</solace.version>
+
+    <assertj-core.version>3.24.2</assertj-core.version>
+    <weld.version>5.1.2.Final</weld.version>
+    <testcontainers-solace.version>1.18.3</testcontainers-solace.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-bom</artifactId>
+        <version>${quarkus.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>com.solace</groupId>
+        <artifactId>solace-messaging-client</artifactId>
+        <version>${solace.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.jboss.weld.se</groupId>
+        <artifactId>weld-se-shaded</artifactId>
+        <version>${weld.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.weld</groupId>
+        <artifactId>weld-core-impl</artifactId>
+        <version>${weld.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>${assertj-core.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>io.quarkus</groupId>
+          <artifactId>quarkus-maven-plugin</artifactId>
+          <version>${quarkus.version}</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${compiler-plugin.version}</version>
+          <configuration>
+            <compilerArgs>
+              <arg>-parameters</arg>
+            </compilerArgs>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>
