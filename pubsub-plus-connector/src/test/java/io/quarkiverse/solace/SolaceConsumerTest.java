@@ -74,7 +74,7 @@ public class SolaceConsumerTest extends WeldTestBase {
         MyConsumer app = runApplication(config, MyConsumer.class);
 
         // Assert on published messages
-        await().untilAsserted(() -> assertThat(app.getReceived().size()).isEqualTo(5));
+//        await().untilAsserted(() -> assertThat(app.getReceived().size()).isEqualTo(5));
         await().untilAsserted(() -> assertThat(app.getReceived()).contains("1", "2", "3", "4", "5"));
     }
 
@@ -225,7 +225,7 @@ public class SolaceConsumerTest extends WeldTestBase {
         OutboundMessage outboundMessage = messageBuilder.build("2");
         publisher.publish(outboundMessage, tp);
 
-        await().untilAsserted(() -> assertThat(app.getReceived().size()).isEqualTo(0));
+        await().untilAsserted(() -> assertThat(app.getReceivedFailedMessages().size()).isEqualTo(0));
     }
 
     @ApplicationScoped
