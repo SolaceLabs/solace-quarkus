@@ -150,7 +150,7 @@ public class SolaceOutgoingChannel
         return Uni.createFrom().<PublishReceipt> emitter(e -> {
             boolean exitExceptionally = false;
             try {
-                if(isPublisherReady) {
+                if (isPublisherReady) {
                     if (waitForPublishReceipt) {
                         publisher.publish(outboundMessage, topic.get(), e);
                     } else {

@@ -28,7 +28,7 @@ public class SolaceBaseTest {
     public void initTopic(TestInfo testInfo) {
         String cn = testInfo.getTestClass().map(Class::getSimpleName).orElse(UUID.randomUUID().toString());
         String mn = testInfo.getTestMethod().map(Method::getName).orElse(UUID.randomUUID().toString());
-//        topic = cn + "/" + mn + "/" + UUID.randomUUID().getMostSignificantBits();
+        //        topic = cn + "/" + mn + "/" + UUID.randomUUID().getMostSignificantBits();
         topic = "quarkus/integration/test/default/topic";
     }
 

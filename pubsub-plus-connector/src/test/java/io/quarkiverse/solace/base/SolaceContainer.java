@@ -136,28 +136,6 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
         updateConfigScript(scriptBuilder, "exit");
         updateConfigScript(scriptBuilder, "exit");
 
-//        // Integration test user acl
-//        updateConfigScript(scriptBuilder,
-//                "create acl-profile integration-test-user-acl message-vpn " + vpn + " allow-client-connect");
-//        updateConfigScript(scriptBuilder, "exit");
-//
-//        updateConfigScript(scriptBuilder, "acl-profile integration-test-user-acl message-vpn " + vpn);
-//        updateConfigScript(scriptBuilder, "publish-topic exceptions smf list quarkus/integration/test");
-//        updateConfigScript(scriptBuilder, "exit");
-//
-//        // Integration test user
-//        updateConfigScript(scriptBuilder, "create client-username " + "int_user" + " message-vpn " + vpn);
-//        updateConfigScript(scriptBuilder, "password " + "int_pass");
-//        updateConfigScript(scriptBuilder, "acl-profile integration-test-user-acl");
-//        updateConfigScript(scriptBuilder, "client-profile default");
-//        updateConfigScript(scriptBuilder, "no shutdown");
-//        updateConfigScript(scriptBuilder, "exit");
-//
-//        updateConfigScript(scriptBuilder, "client-profile default");
-//        updateConfigScript(scriptBuilder, "allow-guaranteed-message-receive");
-//        updateConfigScript(scriptBuilder, "allow-guaranteed-message-send");
-//        updateConfigScript(scriptBuilder, "exit");
-
         // Create VPN if not default
         if (!vpn.equals(DEFAULT_VPN)) {
             updateConfigScript(scriptBuilder, "create message-vpn " + vpn);
@@ -211,10 +189,10 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
             // Configure default ACL
             updateConfigScript(scriptBuilder, "acl-profile default message-vpn " + vpn);
             // Configure default action to disallow
-            if(!subscribeTopicsConfiguration.isEmpty()) {
+            if (!subscribeTopicsConfiguration.isEmpty()) {
                 updateConfigScript(scriptBuilder, "subscribe-topic default-action disallow");
             }
-            if(!publishTopicsConfiguration.isEmpty()) {
+            if (!publishTopicsConfiguration.isEmpty()) {
                 updateConfigScript(scriptBuilder, "publish-topic default-action disallow");
             }
             updateConfigScript(scriptBuilder, "exit");
@@ -325,11 +303,11 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
      * @param service Service to be supported on provided topic
      * @return This container.
      */
-//    public SolaceContainer withTopic(String topic, Service service) {
-//        topicsConfiguration.add(Pair.of(topic, service));
-//        addExposedPort(service.getPort());
-//        return this;
-//    }
+    //    public SolaceContainer withTopic(String topic, Service service) {
+    //        topicsConfiguration.add(Pair.of(topic, service));
+    //        addExposedPort(service.getPort());
+    //        return this;
+    //    }
 
     /**
      * Adds the publish topic exceptions configuration

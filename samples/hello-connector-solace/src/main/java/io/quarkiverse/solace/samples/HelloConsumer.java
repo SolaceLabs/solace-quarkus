@@ -18,26 +18,26 @@ public class HelloConsumer {
      *
      * @param p
      */
-        @Incoming("hello-in")
-        @Outgoing("hello-out")
-        @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-        Message<?> consumeAndPublish(SolaceInboundMessage<?> p) {
-            Log.infof("Received message: %s", new String(p.getMessage().getPayloadAsBytes(), StandardCharsets.UTF_8));
-            SolaceOutboundMetadata outboundMetadata = SolaceOutboundMetadata.builder()
-                    .createPubSubOutboundMetadata();
-            Message<?> outboundMessage = Message.of(p.getPayload(), Metadata.of(outboundMetadata), () -> {
-                CompletableFuture completableFuture = new CompletableFuture();
-                p.ack();
-                completableFuture.complete(null);
-                return completableFuture;
-            }, (throwable) -> {
-                CompletableFuture completableFuture = new CompletableFuture();
-                p.nack(throwable, p.getMetadata());
-                completableFuture.complete(null);
-                return completableFuture;
-            });
-            return outboundMessage;
-        }
+    @Incoming("hello-in")
+    @Outgoing("hello-out")
+    @Acknowledgment(Acknowledgment.Strategy.MANUAL)
+    Message<?> consumeAndPublish(SolaceInboundMessage<?> p) {
+        Log.infof("Received message: %s", new String(p.getMessage().getPayloadAsBytes(), StandardCharsets.UTF_8));
+        SolaceOutboundMetadata outboundMetadata = SolaceOutboundMetadata.builder()
+                .createPubSubOutboundMetadata();
+        Message<?> outboundMessage = Message.of(p.getPayload(), Metadata.of(outboundMetadata), () -> {
+            CompletableFuture completableFuture = new CompletableFuture();
+            p.ack();
+            completableFuture.complete(null);
+            return completableFuture;
+        }, (throwable) -> {
+            CompletableFuture completableFuture = new CompletableFuture();
+            p.nack(throwable, p.getMetadata());
+            completableFuture.complete(null);
+            return completableFuture;
+        });
+        return outboundMessage;
+    }
 
     /**
      * Publish a simple string from using TryMe in Solace broker and you should see the message published to dynamic destination

@@ -1,8 +1,5 @@
 package io.quarkiverse.solace.incoming;
 
-import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
-
 import com.solace.messaging.MessagingService;
 import com.solace.messaging.PubSubPlusClientException;
 import com.solace.messaging.publisher.OutboundMessage;
@@ -38,7 +35,7 @@ class SolaceErrorTopicPublisherHandler implements PersistentMessagePublisher.Mes
                 ic);
         publisher.setMessagePublishReceiptListener(this);
         //        }
-        return Uni.createFrom().<PublishReceipt>emitter(e -> {
+        return Uni.createFrom().<PublishReceipt> emitter(e -> {
             try {
                 // always wait for error message publish receipt to ensure it is successfully spooled on broker.
                 publisher.publish(outboundMessage, Topic.of(errorTopic), e);
