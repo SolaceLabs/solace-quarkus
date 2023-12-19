@@ -14,7 +14,7 @@ import io.quarkus.logging.Log;
 @ApplicationScoped
 public class HelloConsumer {
     /**
-     * Publish a simple string from using TryMe in Solace broker and you should see the message published to topic
+     * Publish a simple message using TryMe in Solace broker and you should see the message published to topic
      *
      * @param p
      */

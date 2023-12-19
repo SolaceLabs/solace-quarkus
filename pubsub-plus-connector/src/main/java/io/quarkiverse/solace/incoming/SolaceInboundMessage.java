@@ -28,7 +28,6 @@ public class SolaceInboundMessage<T> implements ContextAwareMessage<T>, Metadata
     private final SolaceConnectorIncomingConfiguration ic;
     private final T payload;
     private final IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker;
-
     private Metadata metadata;
 
     public SolaceInboundMessage(InboundMessage message, SolaceAckHandler ackHandler, SolaceFailureHandler nackHandler,
@@ -97,32 +96,45 @@ public class SolaceInboundMessage<T> implements ContextAwareMessage<T>, Metadata
 
     @Override
     public CompletionStage<Void> nack(Throwable reason, Metadata nackMetadata) {
-        if (solaceErrorTopicPublisherHandler != null) {
+        if (solaceErrorTopicPublisherHandler == null) {
+            // REJECTED - Will move message to DMQ if enabled, FAILED - Will redeliver the message.
+            MessageAcknowledgementConfiguration.Outcome outcome = ic.getConsumerQueueEnableNacks()
+                    ? (ic.getConsumerQueueDiscardMessagesOnFailure() ? MessageAcknowledgementConfiguration.Outcome.REJECTED
+                            : MessageAcknowledgementConfiguration.Outcome.FAILED)
+                    : null; // if nacks are not supported on broker, no outcome is required.
+            if (outcome != null) {
+                // decrement the tracker, as the message might get redelivered or moved to DMQ
+                this.unacknowledgedMessageTracker.decrement();
+                return nackHandler.handle(this, reason, nackMetadata, outcome);
+            }
+        } else {
             PublishReceipt publishReceipt = solaceErrorTopicPublisherHandler.handle(this, ic)
                     .onFailure().retry().withBackOff(Duration.ofSeconds(1))
                     .atMost(ic.getConsumerQueueErrorMessageMaxDeliveryAttempts())
-                    .onFailure().transform((throwable -> {
-                        SolaceLogging.log.unsuccessfulToTopic(ic.getConsumerQueueErrorTopic().get(), ic.getChannel());
-                        throw new RuntimeException(throwable); // TODO How to catch this exception in tests
-                    }))
-                    .await().atMost(Duration.ofSeconds(30));
+                    .subscribeAsCompletionStage().exceptionally((t) -> {
+                        SolaceLogging.log.unsuccessfulToTopic(ic.getConsumerQueueErrorTopic().get(), ic.getChannel(),
+                                t.getMessage());
+                        return null;
+                    }).join();
 
             if (publishReceipt != null) {
+                // decrement the tracker, as the message might get redelivered or moved to DMQ
                 this.unacknowledgedMessageTracker.decrement();
                 return nackHandler.handle(this, reason, nackMetadata, MessageAcknowledgementConfiguration.Outcome.ACCEPTED);
+            } else {
+                if (ic.getConsumerQueueEnableNacks()) {
+                    // decrement the tracker, as the message might get redelivered or moved to DMQ
+                    this.unacknowledgedMessageTracker.decrement();
+                    return nackHandler.handle(this, reason, nackMetadata,
+                            MessageAcknowledgementConfiguration.Outcome.FAILED);
+                }
             }
         }
 
-        MessageAcknowledgementConfiguration.Outcome outcome = ic.getConsumerQueueEnableNacks()
-                && ic.getConsumerQueueDiscardMessagesOnFailure() && solaceErrorTopicPublisherHandler == null
-                        ? MessageAcknowledgementConfiguration.Outcome.REJECTED // will move message to DMQ is enabled on queue & message
-                        : MessageAcknowledgementConfiguration.Outcome.FAILED; // will redeliver the message
-        if (outcome == MessageAcknowledgementConfiguration.Outcome.REJECTED) {
-            this.unacknowledgedMessageTracker.decrement();
-        }
-        return ic.getConsumerQueueEnableNacks()
-                ? nackHandler.handle(this, reason, nackMetadata, outcome)
-                : Uni.createFrom().voidItem().subscribeAsCompletionStage(); // TODO Disconnect and reconnect the receiver in order to redeliver the message. Required when nacks are not supported by the broker version.
+        // decrement the tracker, as the message might get redelivered or moved to DMQ
+        this.unacknowledgedMessageTracker.decrement();
+        // return void stage if above check fail. This will not nack the message on broker.
+        return Uni.createFrom().voidItem().subscribeAsCompletionStage(); // TODO - Restart receiver to redeliver message, needed when nacks are not supported on broker.
     }
 
     @Override
