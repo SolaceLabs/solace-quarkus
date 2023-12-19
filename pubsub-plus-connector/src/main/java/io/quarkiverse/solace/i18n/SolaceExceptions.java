@@ -21,4 +21,10 @@ public interface SolaceExceptions {
     @Message(id = 18002, value = "Expecting downstream to consume without back-pressure")
     IllegalStateException illegalStateConsumeWithoutBackPressure();
 
+    @Message(id = 18003, value = "Invalid failure strategy: %s")
+    IllegalArgumentException illegalArgumentInvalidFailureStrategy(String strategy);
+
+    @Message(id = 18004, value = "Unknown failure strategy: %s")
+    IllegalArgumentException illegalArgumentUnknownFailureStrategy(String strategy);
+
 }

@@ -1,5 +1,7 @@
 package io.quarkiverse.solace.incoming;
 
+import static io.quarkiverse.solace.i18n.SolaceExceptions.ex;
+
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -24,6 +26,7 @@ import com.solace.messaging.resources.Queue;
 import com.solace.messaging.resources.TopicSubscription;
 
 import io.quarkiverse.solace.SolaceConnectorIncomingConfiguration;
+import io.quarkiverse.solace.fault.*;
 import io.quarkiverse.solace.i18n.SolaceLogging;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
@@ -42,7 +45,6 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     private final PersistentMessageReceiver receiver;
     private final Flow.Publisher<? extends Message<?>> stream;
     private final ExecutorService pollerThread;
-    private SolaceErrorTopicPublisherHandler solaceErrorTopicPublisherHandler;
     private long waitTimeout = -1;
 
     // Assuming we won't ever exceed the limit of an unsigned long...
@@ -54,7 +56,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
         this.waitTimeout = ic.getClientShutdownWaitTimeout();
         DirectMessageReceiver r = solace.createDirectMessageReceiverBuilder().build();
         Outcome[] outcomes = new Outcome[] { Outcome.ACCEPTED };
-        if (ic.getConsumerQueueEnableNacks()) {
+        if (ic.getConsumerQueueSupportsNacks()) {
             outcomes = new Outcome[] { Outcome.ACCEPTED, Outcome.FAILED, Outcome.REJECTED };
         }
         PersistentMessageReceiverBuilder builder = solace.createPersistentMessageReceiverBuilder()
@@ -94,12 +96,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
         this.receiver = builder.build(getQueue(ic));
         boolean lazyStart = ic.getClientLazyStart();
         this.ackHandler = new SolaceAckHandler(receiver);
-        this.failureHandler = new SolaceFailureHandler(channel, receiver, solace);
-        if (ic.getConsumerQueuePublishToErrorTopicOnFailure()) {
-            ic.getConsumerQueueErrorTopic().ifPresent(errorTopic -> {
-                this.solaceErrorTopicPublisherHandler = new SolaceErrorTopicPublisherHandler(solace, errorTopic);
-            });
-        }
+        this.failureHandler = createFailureHandler(ic, solace);
 
         Integer timeout = getTimeout(ic.getConsumerQueuePolledWaitTimeInMillis());
         // TODO Here use a subscription receiver.receiveAsync with an internal queue
@@ -109,14 +106,41 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
                         .runSubscriptionOn(pollerThread))
                 .until(__ -> closed.get())
                 .emitOn(context::runOnContext)
-                .map(consumed -> new SolaceInboundMessage<>(consumed, ackHandler, failureHandler,
-                        solaceErrorTopicPublisherHandler, ic, unacknowledgedMessageTracker))
+                .map(consumed -> new SolaceInboundMessage<>(consumed, ackHandler, failureHandler, ic,
+                        unacknowledgedMessageTracker))
                 .plug(m -> lazyStart ? m.onSubscription().call(() -> Uni.createFrom().completionStage(receiver.startAsync()))
                         : m)
                 .onFailure().retry().withBackOff(Duration.ofSeconds(1)).atMost(3);
         if (!lazyStart) {
             receiver.start();
         }
+    }
+
+    private SolaceFailureHandler createFailureHandler(SolaceConnectorIncomingConfiguration ic, MessagingService solace) {
+        String strategy = ic.getConsumerQueueFailureStrategy();
+        SolaceFailureHandler.Strategy actualStrategy = SolaceFailureHandler.Strategy.from(strategy);
+        switch (actualStrategy) {
+            case IGNORE:
+                return new SolaceIgnoreFailure(ic.getChannel());
+            case FAIL:
+                return new SolaceFail(ic.getChannel(), receiver, solace);
+            case DISCARD:
+                return new SolaceDiscard(ic.getChannel(), receiver, solace);
+            case ERROR_TOPIC:
+                SolaceErrorTopic solaceErrorTopic = new SolaceErrorTopic(ic.getChannel(), receiver, solace);
+                if (ic.getConsumerQueueErrorTopic().isEmpty()) {
+                    throw ex.illegalArgumentInvalidFailureStrategy(strategy);
+                }
+                solaceErrorTopic.setErrorTopic(ic.getConsumerQueueErrorTopic().get());
+                solaceErrorTopic.setDmqEligible(ic.getConsumerQueueErrorMessageDmqEligible().booleanValue());
+                solaceErrorTopic.setTimeToLive(ic.getConsumerQueueErrorMessageTtl().orElse(null));
+                solaceErrorTopic.setMaxDeliveryAttempts(ic.getConsumerQueueErrorMessageMaxDeliveryAttempts());
+                solaceErrorTopic.setSupportsNacks(ic.getConsumerQueueSupportsNacks());
+                return solaceErrorTopic;
+            default:
+                throw ex.illegalArgumentInvalidFailureStrategy(strategy);
+        }
+
     }
 
     private Integer getTimeout(Integer timeoutInMillis) {

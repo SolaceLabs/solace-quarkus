@@ -2,7 +2,7 @@ package io.quarkiverse.solace.incoming;
 
 import com.solace.messaging.config.MessageAcknowledgementConfiguration;
 
-class SettleMetadata {
+public class SettleMetadata {
 
     MessageAcknowledgementConfiguration.Outcome settleOutcome;
 

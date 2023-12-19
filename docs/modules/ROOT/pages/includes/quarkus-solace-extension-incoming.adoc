@@ -178,12 +178,12 @@ Maximum wait time in milliseconds for consumers to receive a message from config
 --|`integer`
 | 100
 
-a| [[quarkus-solace_quarkus.consumer.queue.discard-messages-on-failure]]`link:#quarkus-solace_quarkus.consumer.queue.discard-messages-on-failure[consumer.queue.discard-messages-on-failure]`
+a| [[quarkus-solace_quarkus.consumer.queue.failure-strategy]]`link:#quarkus-solace_quarkus.consumer.queue.failure-strategy[consumer.queue.failure-strategy]`
 
 
 [.description]
 --
-Whether discard messages from queue on failure. A negative acknowledgment of type REJECTED is sent to broker which discards the messages from queue and will move to DMQ if enabled. This option works only when enable-nacks is true and error topic is not configured.
+Specify the failure strategy to apply when a message consumed from Solace broker is nacked. Accepted values are `ignore`, `fail`, `discard` (default).
 
 // ifdef::add-copy-button-to-env-var[]
 // Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE+++[]
@@ -191,24 +191,8 @@ Whether discard messages from queue on failure. A negative acknowledgment of typ
 // ifndef::add-copy-button-to-env-var[]
 // Environment variable: `+++QUARKUS_SOLACE+++`
 // endif::add-copy-button-to-env-var[]
---|`boolean`
-| false
-
-a| [[quarkus-solace_quarkus.consumer.queue.publish-to-error-topic-on-failure]]`link:#quarkus-solace_quarkus.consumer.queue.publish-to-error-topic-on-failure[consumer.queue.publish-to-error-topic-on-failure]`
-
-
-[.description]
---
-Whether to publish consumed message to error topic on failure.
-
-// ifdef::add-copy-button-to-env-var[]
-// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE+++[]
-// endif::add-copy-button-to-env-var[]
-// ifndef::add-copy-button-to-env-var[]
-// Environment variable: `+++QUARKUS_SOLACE+++`
-// endif::add-copy-button-to-env-var[]
---|`boolean`
-| false
+--|`string`
+| discard
 
 a| [[quarkus-solace_quarkus.consumer.queue.error.topic]]`link:#quarkus-solace_quarkus.consumer.queue.error.topic[consumer.queue.error.topic]`
 
@@ -274,7 +258,7 @@ Maximum number of attempts to send a failed message to the error topic in case o
 --|`int`
 | `3`
 
-a| [[quarkus-solace_quarkus.consumer.queue.enable-nacks]]`link:#quarkus-solace_quarkus.consumer.queue.enable-nacks[consumer.queue.enable-nacks]`
+a| [[quarkus-solace_quarkus.consumer.queue.supports-nacks]]`link:#quarkus-solace_quarkus.consumer.queue.supports-nacks[consumer.queue.supports-nacks]`
 
 
 [.description]
@@ -288,6 +272,6 @@ Whether to enable negative acknowledgments on failed messages. Nacks are support
 // Environment variable: `+++QUARKUS_SOLACE+++`
 // endif::add-copy-button-to-env-var[]
 --|`boolean`
-| `false`
+| `true`
 
 |===
