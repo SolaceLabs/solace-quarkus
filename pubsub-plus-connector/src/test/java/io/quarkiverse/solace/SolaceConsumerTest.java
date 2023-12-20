@@ -116,7 +116,7 @@ public class SolaceConsumerTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_QUEUE_NAME)
                 .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
-                .with("mp.messaging.incoming.in.consumer.queue.publish-to-error-topic-on-failure", true)
+                .with("mp.messaging.incoming.in.consumer.queue.failure-strategy", "error_topic")
                 .with("mp.messaging.incoming.in.consumer.queue.error.topic",
                         SolaceContainer.INTEGRATION_TEST_ERROR_QUEUE_SUBSCRIPTION)
                 .with("mp.messaging.incoming.in.consumer.queue.error.message.ttl", 1000)
@@ -150,8 +150,8 @@ public class SolaceConsumerTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_QUEUE_NAME)
                 .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
-                .with("mp.messaging.incoming.in.consumer.queue.enable-nacks", "true")
-                .with("mp.messaging.incoming.in.consumer.queue.discard-messages-on-failure", "true")
+                .with("mp.messaging.incoming.in.consumer.queue.supports-nacks", "true")
+                .with("mp.messaging.incoming.in.consumer.queue.failure-strategy", "discard")
                 .with("mp.messaging.incoming.dmq-in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.dmq-in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_DMQ_NAME)
                 .with("mp.messaging.incoming.dmq-in.consumer.queue.type", "durable-exclusive");
@@ -207,7 +207,7 @@ public class SolaceConsumerTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_QUEUE_NAME)
                 .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
-                .with("mp.messaging.incoming.in.consumer.queue.publish-to-error-topic-on-failure", true)
+                .with("mp.messaging.incoming.in.consumer.queue.failure-strategy", "error_topic")
                 .with("mp.messaging.incoming.in.consumer.queue.error.topic",
                         "publish/deny")
                 .with("mp.messaging.incoming.error-in.connector", "quarkus-solace")

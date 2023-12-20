@@ -2,19 +2,16 @@ package io.quarkiverse.solace.incoming;
 
 import static io.smallrye.reactive.messaging.providers.locals.ContextAwareMessage.captureContextMetadata;
 
-import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 
 import org.eclipse.microprofile.reactive.messaging.Metadata;
 
-import com.solace.messaging.config.MessageAcknowledgementConfiguration;
-import com.solace.messaging.publisher.PersistentMessagePublisher.PublishReceipt;
 import com.solace.messaging.receiver.InboundMessage;
 
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.quarkiverse.solace.SolaceConnectorIncomingConfiguration;
+import io.quarkiverse.solace.fault.SolaceFailureHandler;
 import io.quarkiverse.solace.i18n.SolaceLogging;
-import io.smallrye.mutiny.Uni;
 import io.smallrye.reactive.messaging.providers.MetadataInjectableMessage;
 import io.smallrye.reactive.messaging.providers.locals.ContextAwareMessage;
 import io.vertx.core.buffer.Buffer;
@@ -24,21 +21,18 @@ public class SolaceInboundMessage<T> implements ContextAwareMessage<T>, Metadata
     private final InboundMessage msg;
     private final SolaceAckHandler ackHandler;
     private final SolaceFailureHandler nackHandler;
-    private final SolaceErrorTopicPublisherHandler solaceErrorTopicPublisherHandler;
     private final SolaceConnectorIncomingConfiguration ic;
     private final T payload;
     private final IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker;
     private Metadata metadata;
 
     public SolaceInboundMessage(InboundMessage message, SolaceAckHandler ackHandler, SolaceFailureHandler nackHandler,
-            SolaceErrorTopicPublisherHandler solaceErrorTopicPublisherHandler,
             SolaceConnectorIncomingConfiguration ic, IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker) {
         this.msg = message;
         this.unacknowledgedMessageTracker = unacknowledgedMessageTracker;
         this.payload = (T) convertPayload();
         this.ackHandler = ackHandler;
         this.nackHandler = nackHandler;
-        this.solaceErrorTopicPublisherHandler = solaceErrorTopicPublisherHandler;
         this.ic = ic;
         this.metadata = captureContextMetadata(new SolaceInboundMetadata(message));
     }
@@ -96,45 +90,48 @@ public class SolaceInboundMessage<T> implements ContextAwareMessage<T>, Metadata
 
     @Override
     public CompletionStage<Void> nack(Throwable reason, Metadata nackMetadata) {
-        if (solaceErrorTopicPublisherHandler == null) {
-            // REJECTED - Will move message to DMQ if enabled, FAILED - Will redeliver the message.
-            MessageAcknowledgementConfiguration.Outcome outcome = ic.getConsumerQueueEnableNacks()
-                    ? (ic.getConsumerQueueDiscardMessagesOnFailure() ? MessageAcknowledgementConfiguration.Outcome.REJECTED
-                            : MessageAcknowledgementConfiguration.Outcome.FAILED)
-                    : null; // if nacks are not supported on broker, no outcome is required.
-            if (outcome != null) {
-                // decrement the tracker, as the message might get redelivered or moved to DMQ
-                this.unacknowledgedMessageTracker.decrement();
-                return nackHandler.handle(this, reason, nackMetadata, outcome);
-            }
-        } else {
-            PublishReceipt publishReceipt = solaceErrorTopicPublisherHandler.handle(this, ic)
-                    .onFailure().retry().withBackOff(Duration.ofSeconds(1))
-                    .atMost(ic.getConsumerQueueErrorMessageMaxDeliveryAttempts())
-                    .subscribeAsCompletionStage().exceptionally((t) -> {
-                        SolaceLogging.log.unsuccessfulToTopic(ic.getConsumerQueueErrorTopic().get(), ic.getChannel(),
-                                t.getMessage());
-                        return null;
-                    }).join();
-
-            if (publishReceipt != null) {
-                // decrement the tracker, as the message might get redelivered or moved to DMQ
-                this.unacknowledgedMessageTracker.decrement();
-                return nackHandler.handle(this, reason, nackMetadata, MessageAcknowledgementConfiguration.Outcome.ACCEPTED);
-            } else {
-                if (ic.getConsumerQueueEnableNacks()) {
-                    // decrement the tracker, as the message might get redelivered or moved to DMQ
-                    this.unacknowledgedMessageTracker.decrement();
-                    return nackHandler.handle(this, reason, nackMetadata,
-                            MessageAcknowledgementConfiguration.Outcome.FAILED);
-                }
-            }
-        }
-
-        // decrement the tracker, as the message might get redelivered or moved to DMQ
         this.unacknowledgedMessageTracker.decrement();
-        // return void stage if above check fail. This will not nack the message on broker.
-        return Uni.createFrom().voidItem().subscribeAsCompletionStage(); // TODO - Restart receiver to redeliver message, needed when nacks are not supported on broker.
+        return nackHandler.handle(this, reason, nackMetadata);
+
+        //        if (solaceErrorTopicPublisherHandler == null) {
+        //            // REJECTED - Will move message to DMQ if enabled, FAILED - Will redeliver the message.
+        //            MessageAcknowledgementConfiguration.Outcome outcome = ic.getConsumerQueueEnableNacks()
+        //                    ? (ic.getConsumerQueueDiscardMessagesOnFailure() ? MessageAcknowledgementConfiguration.Outcome.REJECTED
+        //                            : MessageAcknowledgementConfiguration.Outcome.FAILED)
+        //                    : null; // if nacks are not supported on broker, no outcome is required.
+        //            if (outcome != null) {
+        //                // decrement the tracker, as the message might get redelivered or moved to DMQ
+        //                this.unacknowledgedMessageTracker.decrement();
+        //                return nackHandler.handle(this, reason, nackMetadata, outcome);
+        //            }
+        //        } else {
+        //            PublishReceipt publishReceipt = solaceErrorTopicPublisherHandler.handle(this, ic)
+        //                    .onFailure().retry().withBackOff(Duration.ofSeconds(1))
+        //                    .atMost(ic.getConsumerQueueErrorMessageMaxDeliveryAttempts())
+        //                    .subscribeAsCompletionStage().exceptionally((t) -> {
+        //                        SolaceLogging.log.unsuccessfulToTopic(ic.getConsumerQueueErrorTopic().get(), ic.getChannel(),
+        //                                t.getMessage());
+        //                        return null;
+        //                    }).join();
+        //
+        //            if (publishReceipt != null) {
+        //                // decrement the tracker, as the message might get redelivered or moved to DMQ
+        //                this.unacknowledgedMessageTracker.decrement();
+        //                return nackHandler.handle(this, reason, nackMetadata, MessageAcknowledgementConfiguration.Outcome.ACCEPTED);
+        //            } else {
+        //                if (ic.getConsumerQueueEnableNacks()) {
+        //                    // decrement the tracker, as the message might get redelivered or moved to DMQ
+        //                    this.unacknowledgedMessageTracker.decrement();
+        //                    return nackHandler.handle(this, reason, nackMetadata,
+        //                            MessageAcknowledgementConfiguration.Outcome.FAILED);
+        //                }
+        //            }
+        //        }
+        //
+        //        // decrement the tracker, as the message might get redelivered or moved to DMQ
+        //        this.unacknowledgedMessageTracker.decrement();
+        //        // return void stage if above check fail. This will not nack the message on broker.
+        //        return Uni.createFrom().voidItem().subscribeAsCompletionStage(); // TODO - Restart receiver to redeliver message, needed when nacks are not supported on broker.
     }
 
     @Override
