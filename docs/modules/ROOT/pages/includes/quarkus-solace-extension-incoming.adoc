@@ -183,7 +183,15 @@ a| [[quarkus-solace_quarkus.consumer.queue.failure-strategy]]`link:#quarkus-sola
 
 [.description]
 --
-Specify the failure strategy to apply when a message consumed from Solace broker is nacked. Accepted values are `ignore`, `fail`, `discard` (default).
+Specify the failure strategy to apply when a message consumed from Solace broker is nacked. Accepted values are `ignore` (default), `fail`, `discard`, `error_topic`.
+
+`ignore` - Mark the message as IGNORED, will continue processing with next message.
+
+`fail` - Mark the message as FAILED, broker will redeliver the message. Nacks are supported on event brokers 10.2.1 and later, so enable this strategy based on broker version.
+
+`discard` - Mark the message as REJECTED, broker will discard the message. The message will be moved to DMQ if DMQ is configured for queue and DMQ Eligible is set on message otherwise message will be lost. Nacks are supported on event brokers 10.2.1 and later, so enable this strategy based on broker version.
+
+`error_topic` - Will publish the message to configured error topic, on success the message will be acknowledged in the queue.
 
 // ifdef::add-copy-button-to-env-var[]
 // Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE+++[]

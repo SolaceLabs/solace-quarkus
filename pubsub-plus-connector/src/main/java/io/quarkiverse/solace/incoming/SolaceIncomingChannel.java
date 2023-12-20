@@ -123,9 +123,9 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
             case IGNORE:
                 return new SolaceIgnoreFailure(ic.getChannel());
             case FAIL:
-                return new SolaceFail(ic.getChannel(), receiver, solace);
+                return new SolaceFail(ic.getChannel(), receiver);
             case DISCARD:
-                return new SolaceDiscard(ic.getChannel(), receiver, solace);
+                return new SolaceDiscard(ic.getChannel(), receiver);
             case ERROR_TOPIC:
                 SolaceErrorTopic solaceErrorTopic = new SolaceErrorTopic(ic.getChannel(), receiver, solace);
                 if (ic.getConsumerQueueErrorTopic().isEmpty()) {
@@ -135,7 +135,6 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
                 solaceErrorTopic.setDmqEligible(ic.getConsumerQueueErrorMessageDmqEligible().booleanValue());
                 solaceErrorTopic.setTimeToLive(ic.getConsumerQueueErrorMessageTtl().orElse(null));
                 solaceErrorTopic.setMaxDeliveryAttempts(ic.getConsumerQueueErrorMessageMaxDeliveryAttempts());
-                solaceErrorTopic.setSupportsNacks(ic.getConsumerQueueSupportsNacks());
                 return solaceErrorTopic;
             default:
                 throw ex.illegalArgumentInvalidFailureStrategy(strategy);

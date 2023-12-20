@@ -11,9 +11,22 @@ import io.quarkiverse.solace.incoming.SolaceInboundMessage;
 public interface SolaceFailureHandler {
 
     enum Strategy {
+        /**
+         * Mark the message as IGNORED, will continue processing with next message.
+         */
         IGNORE,
+        /**
+         * Mark the message as FAILED, broker will redeliver the message.
+         */
         FAIL,
+        /**
+         * Mark the message as REJECTED, broker will discard the message. The message will be moved to DMQ if DMQ is configured
+         * for queue and DMQ Eligible is set on message.
+         */
         DISCARD,
+        /**
+         * Will publish the message to configured error topic, on success the message will be acknowledged in the queue.
+         */
         ERROR_TOPIC;
 
         public static Strategy from(String s) {
@@ -34,33 +47,5 @@ public interface SolaceFailureHandler {
         }
     }
 
-    //    private final String channel;
-    //    private final AcknowledgementSupport ackSupport;
-    //
-    //    private final MessagingService solace;
-
-    //    public SolaceFailureHandler(String channel, AcknowledgementSupport ackSupport, MessagingService solace) {
-    //        this.channel = channel;
-    //        this.ackSupport = ackSupport;
-    //        this.solace = solace;
-    //    }
-
     CompletionStage<Void> handle(SolaceInboundMessage<?> msg, Throwable reason, Metadata metadata);
-    //    {
-    //        MessageAcknowledgementConfiguration.Outcome outcome;
-    //        if (metadata != null) {
-    //            outcome = metadata.get(SettleMetadata.class)
-    //                    .map(SettleMetadata::getOutcome)
-    //                    .orElseGet(() -> messageOutCome /* TODO get outcome from reason */);
-    //        } else {
-    //            outcome = messageOutCome != null ? messageOutCome
-    //                    : MessageAcknowledgementConfiguration.Outcome.FAILED;
-    //        }
-    //
-    //        SolaceLogging.log.messageSettled(channel, outcome.toString().toLowerCase(), reason.getMessage());
-    //        return Uni.createFrom().voidItem()
-    //                .invoke(() -> ackSupport.settle(msg.getMessage(), outcome))
-    //                .runSubscriptionOn(msg::runOnMessageContext)
-    //                .subscribeAsCompletionStage();
-    //    }
 }

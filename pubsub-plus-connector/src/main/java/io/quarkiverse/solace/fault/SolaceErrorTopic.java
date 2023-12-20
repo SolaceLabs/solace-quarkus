@@ -24,7 +24,6 @@ public class SolaceErrorTopic implements SolaceFailureHandler {
     private String errorTopic;
     private boolean dmqEligible;
     private Long timeToLive;
-    private boolean supportsNacks;
 
     public SolaceErrorTopic(String channel, AcknowledgementSupport ackSupport, MessagingService solace) {
         this.channel = channel;
@@ -49,10 +48,6 @@ public class SolaceErrorTopic implements SolaceFailureHandler {
         this.timeToLive = timeToLive;
     }
 
-    public void setSupportsNacks(boolean supportsNacks) {
-        this.supportsNacks = supportsNacks;
-    }
-
     @Override
     public CompletionStage<Void> handle(SolaceInboundMessage<?> msg, Throwable reason, Metadata metadata) {
         PersistentMessagePublisher.PublishReceipt publishReceipt = solaceErrorTopicPublisherHandler
@@ -70,15 +65,9 @@ public class SolaceErrorTopic implements SolaceFailureHandler {
                     .invoke(() -> ackSupport.settle(msg.getMessage(), MessageAcknowledgementConfiguration.Outcome.ACCEPTED))
                     .runSubscriptionOn(msg::runOnMessageContext)
                     .subscribeAsCompletionStage();
-        } else {
-            if (supportsNacks) {
-                return Uni.createFrom().voidItem()
-                        .invoke(() -> ackSupport.settle(msg.getMessage(), MessageAcknowledgementConfiguration.Outcome.FAILED))
-                        .runSubscriptionOn(msg::runOnMessageContext)
-                        .subscribeAsCompletionStage();
-            }
         }
 
-        return Uni.createFrom().voidItem().subscribeAsCompletionStage(); // TODO :: Restart receiver to redeliver message - needed when nacks are not supported.
+        return Uni.createFrom().<Void> failure(reason)
+                .emitOn(msg::runOnMessageContext).subscribeAsCompletionStage();
     }
 }

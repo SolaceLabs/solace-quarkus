@@ -4,7 +4,6 @@ import java.util.concurrent.CompletionStage;
 
 import org.eclipse.microprofile.reactive.messaging.Metadata;
 
-import com.solace.messaging.MessagingService;
 import com.solace.messaging.config.MessageAcknowledgementConfiguration;
 import com.solace.messaging.receiver.AcknowledgementSupport;
 
@@ -17,12 +16,9 @@ public class SolaceFail implements SolaceFailureHandler {
     private final String channel;
     private final AcknowledgementSupport ackSupport;
 
-    private final MessagingService solace;
-
-    public SolaceFail(String channel, AcknowledgementSupport ackSupport, MessagingService solace) {
+    public SolaceFail(String channel, AcknowledgementSupport ackSupport) {
         this.channel = channel;
         this.ackSupport = ackSupport;
-        this.solace = solace;
     }
 
     @Override
