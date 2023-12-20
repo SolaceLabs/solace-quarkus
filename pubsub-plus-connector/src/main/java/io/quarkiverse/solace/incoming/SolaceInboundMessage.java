@@ -9,7 +9,6 @@ import org.eclipse.microprofile.reactive.messaging.Metadata;
 import com.solace.messaging.receiver.InboundMessage;
 
 import io.netty.handler.codec.http.HttpHeaderValues;
-import io.quarkiverse.solace.SolaceConnectorIncomingConfiguration;
 import io.quarkiverse.solace.fault.SolaceFailureHandler;
 import io.quarkiverse.solace.i18n.SolaceLogging;
 import io.smallrye.reactive.messaging.providers.MetadataInjectableMessage;
@@ -21,19 +20,17 @@ public class SolaceInboundMessage<T> implements ContextAwareMessage<T>, Metadata
     private final InboundMessage msg;
     private final SolaceAckHandler ackHandler;
     private final SolaceFailureHandler nackHandler;
-    private final SolaceConnectorIncomingConfiguration ic;
     private final T payload;
     private final IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker;
     private Metadata metadata;
 
     public SolaceInboundMessage(InboundMessage message, SolaceAckHandler ackHandler, SolaceFailureHandler nackHandler,
-            SolaceConnectorIncomingConfiguration ic, IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker) {
+            IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker) {
         this.msg = message;
         this.unacknowledgedMessageTracker = unacknowledgedMessageTracker;
         this.payload = (T) convertPayload();
         this.ackHandler = ackHandler;
         this.nackHandler = nackHandler;
-        this.ic = ic;
         this.metadata = captureContextMetadata(new SolaceInboundMetadata(message));
     }
 

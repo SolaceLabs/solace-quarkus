@@ -98,15 +98,14 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
         this.ackHandler = new SolaceAckHandler(receiver);
         this.failureHandler = createFailureHandler(ic, solace);
 
-        Integer timeout = getTimeout(ic.getConsumerQueuePolledWaitTimeInMillis());
         // TODO Here use a subscription receiver.receiveAsync with an internal queue
         this.pollerThread = Executors.newSingleThreadExecutor();
         this.stream = Multi.createBy().repeating()
-                .uni(() -> Uni.createFrom().item(timeout == null ? receiver.receiveMessage() : receiver.receiveMessage(timeout))
+                .uni(() -> Uni.createFrom().item(receiver::receiveMessage)
                         .runSubscriptionOn(pollerThread))
                 .until(__ -> closed.get())
                 .emitOn(context::runOnContext)
-                .map(consumed -> new SolaceInboundMessage<>(consumed, ackHandler, failureHandler, ic,
+                .map(consumed -> new SolaceInboundMessage<>(consumed, ackHandler, failureHandler,
                         unacknowledgedMessageTracker))
                 .plug(m -> lazyStart ? m.onSubscription().call(() -> Uni.createFrom().completionStage(receiver.startAsync()))
                         : m)
@@ -140,29 +139,6 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
                 throw ex.illegalArgumentInvalidFailureStrategy(strategy);
         }
 
-    }
-
-    private Integer getTimeout(Integer timeoutInMillis) {
-        Integer realTimeout;
-        final Long expiry = timeoutInMillis != null
-                ? timeoutInMillis + System.currentTimeMillis()
-                : null;
-        if (expiry != null) {
-            try {
-                realTimeout = Math.toIntExact(expiry - System.currentTimeMillis());
-                if (realTimeout < 0) {
-                    realTimeout = 0;
-                }
-            } catch (ArithmeticException e) {
-                // Always true: expiry - System.currentTimeMillis() < timeoutInMillis
-                // So just set it to 0 (no-wait) if we underflow
-                realTimeout = 0;
-            }
-        } else {
-            realTimeout = null;
-        }
-
-        return realTimeout;
     }
 
     private static Queue getQueue(SolaceConnectorIncomingConfiguration ic) {
