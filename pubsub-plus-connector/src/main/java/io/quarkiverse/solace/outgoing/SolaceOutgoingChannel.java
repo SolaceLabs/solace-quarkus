@@ -49,11 +49,11 @@ public class SolaceOutgoingChannel
             case "elastic":
                 builder.onBackPressureElastic();
                 break;
-            case "wait":
-                builder.onBackPressureWait(oc.getProducerBackPressureBufferCapacity());
+            case "reject":
+                builder.onBackPressureReject(oc.getProducerBackPressureBufferCapacity());
                 break;
             default:
-                builder.onBackPressureReject(oc.getProducerBackPressureBufferCapacity());
+                builder.onBackPressureWait(oc.getProducerBackPressureBufferCapacity());
                 break;
         }
         this.waitTimeout = oc.getClientShutdownWaitTimeout();

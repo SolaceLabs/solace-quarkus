@@ -51,7 +51,8 @@ public class HelloConsumer {
     Message<?> consumeAndPublishToDynamicTopic(SolaceInboundMessage<?> p) {
         Log.infof("Received message: %s", new String(p.getMessage().getPayloadAsBytes(), StandardCharsets.UTF_8));
         SolaceOutboundMetadata outboundMetadata = SolaceOutboundMetadata.builder()
-                .setApplicationMessageId("test").setDynamicDestination("hello/foobar/" + p.getMessage().getSenderId()) // make sure senderId is available on incoming message
+                .setApplicationMessageId("test")
+                .setDynamicDestination("solace/quarkus/producer/" + p.getMessage().getCorrelationId()) // make sure correlationID is available on incoming message
                 .createPubSubOutboundMetadata();
         Message<?> outboundMessage = Message.of(p.getPayload(), Metadata.of(outboundMetadata), () -> {
             CompletableFuture completableFuture = new CompletableFuture();
