@@ -34,8 +34,8 @@ public interface SolaceLogging extends BasicLogger {
     void unsuccessfulToTopic(String topic, String channel, String reason);
 
     @LogMessage(level = Logger.Level.ERROR)
-    @Message(id = 55204, value = "A exception occurred when publishing to topic %s")
-    void publishException(String topic);
+    @Message(id = 55204, value = "A exception occurred when publishing to topic %s, reason: %s")
+    void publishException(String topic, String reason);
 
     @LogMessage(level = Logger.Level.ERROR)
     @Message(id = 55205, value = "A exception occurred during shutdown %s")

@@ -15,7 +15,6 @@ import io.smallrye.mutiny.subscription.UniEmitter;
 class SolaceErrorTopicPublisherHandler implements PersistentMessagePublisher.MessagePublishReceiptListener {
 
     private final MessagingService solace;
-    private String errorTopic;
     private final PersistentMessagePublisher publisher;
     private final OutboundErrorMessageMapper outboundErrorMessageMapper;
 
@@ -30,7 +29,6 @@ class SolaceErrorTopicPublisherHandler implements PersistentMessagePublisher.Mes
     public Uni<PublishReceipt> handle(SolaceInboundMessage<?> message,
             String errorTopic,
             boolean dmqEligible, Long timeToLive) {
-        this.errorTopic = errorTopic;
         OutboundMessage outboundMessage = outboundErrorMessageMapper.mapError(this.solace.messageBuilder(),
                 message.getMessage(),
                 dmqEligible, timeToLive);
@@ -41,10 +39,9 @@ class SolaceErrorTopicPublisherHandler implements PersistentMessagePublisher.Mes
                 // always wait for error message publish receipt to ensure it is successfully spooled on broker.
                 publisher.publish(outboundMessage, Topic.of(errorTopic), e);
             } catch (Throwable t) {
-                SolaceLogging.log.publishException(this.errorTopic);
                 e.fail(t);
             }
-        }).invoke(() -> System.out.println(""));
+        }).onFailure().invoke(t -> SolaceLogging.log.publishException(errorTopic, t.getMessage()));
     }
 
     @Override
@@ -53,7 +50,6 @@ class SolaceErrorTopicPublisherHandler implements PersistentMessagePublisher.Mes
                 .getUserContext();
         PubSubPlusClientException exception = publishReceipt.getException();
         if (exception != null) {
-            SolaceLogging.log.publishException(this.errorTopic);
             uniEmitter.fail(exception);
         } else {
             uniEmitter.complete(publishReceipt);
