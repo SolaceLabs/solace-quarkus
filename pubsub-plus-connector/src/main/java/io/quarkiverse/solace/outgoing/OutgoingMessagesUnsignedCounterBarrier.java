@@ -1,12 +1,12 @@
 package io.quarkiverse.solace.outgoing;
 
-import io.quarkiverse.solace.i18n.SolaceLogging;
-
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import io.quarkiverse.solace.i18n.SolaceLogging;
 
 class OutgoingMessagesUnsignedCounterBarrier {
     private final AtomicLong counter; // Treated as an unsigned long (i.e. range from 0 -> -1)
@@ -61,7 +61,8 @@ class OutgoingMessagesUnsignedCounterBarrier {
         awaitLock.lock();
         try {
             if (timeout > 0) {
-                SolaceLogging.log.info(String.format("Waiting for %s items, time remaining: %s %s", counter.get(), timeout, unit));
+                SolaceLogging.log
+                        .info(String.format("Waiting for %s items, time remaining: %s %s", counter.get(), timeout, unit));
                 final long expiry = unit.toMillis(timeout) + System.currentTimeMillis();
                 while (isGreaterThanZero()) {
                     long realTimeout = expiry - System.currentTimeMillis();
