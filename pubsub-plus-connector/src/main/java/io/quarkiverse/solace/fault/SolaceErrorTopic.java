@@ -7,12 +7,10 @@ import org.eclipse.microprofile.reactive.messaging.Metadata;
 
 import com.solace.messaging.MessagingService;
 import com.solace.messaging.config.MessageAcknowledgementConfiguration;
-import com.solace.messaging.publisher.PersistentMessagePublisher;
 import com.solace.messaging.receiver.AcknowledgementSupport;
 
 import io.quarkiverse.solace.i18n.SolaceLogging;
 import io.quarkiverse.solace.incoming.SolaceInboundMessage;
-import io.smallrye.mutiny.Uni;
 
 public class SolaceErrorTopic implements SolaceFailureHandler {
     private final String channel;
@@ -50,24 +48,18 @@ public class SolaceErrorTopic implements SolaceFailureHandler {
 
     @Override
     public CompletionStage<Void> handle(SolaceInboundMessage<?> msg, Throwable reason, Metadata metadata) {
-        PersistentMessagePublisher.PublishReceipt publishReceipt = solaceErrorTopicPublisherHandler
-                .handle(msg, errorTopic, dmqEligible, timeToLive)
+        return solaceErrorTopicPublisherHandler.handle(msg, errorTopic, dmqEligible, timeToLive)
                 .onFailure().retry().withBackOff(Duration.ofSeconds(1))
                 .atMost(maxDeliveryAttempts)
-                .subscribeAsCompletionStage().exceptionally((t) -> {
-                    SolaceLogging.log.unsuccessfulToTopic(errorTopic, channel,
-                            t.getMessage());
-                    return null;
-                }).join();
-
-        if (publishReceipt != null) {
-            return Uni.createFrom().voidItem()
-                    .invoke(() -> ackSupport.settle(msg.getMessage(), MessageAcknowledgementConfiguration.Outcome.ACCEPTED))
-                    .runSubscriptionOn(msg::runOnMessageContext)
-                    .subscribeAsCompletionStage();
-        }
-
-        return Uni.createFrom().<Void> failure(reason)
-                .emitOn(msg::runOnMessageContext).subscribeAsCompletionStage();
+                .onItem().invoke(() -> {
+                    SolaceLogging.log.messageSettled(channel,
+                            MessageAcknowledgementConfiguration.Outcome.ACCEPTED.toString().toLowerCase(),
+                            "Message is published to error topic and acknowledged on queue.");
+                    ackSupport.settle(msg.getMessage(), MessageAcknowledgementConfiguration.Outcome.ACCEPTED);
+                })
+                .replaceWithVoid()
+                .onFailure().invoke(t -> SolaceLogging.log.unsuccessfulToTopic(errorTopic, channel, t))
+                .emitOn(msg::runOnMessageContext)
+                .subscribeAsCompletionStage();
     }
 }

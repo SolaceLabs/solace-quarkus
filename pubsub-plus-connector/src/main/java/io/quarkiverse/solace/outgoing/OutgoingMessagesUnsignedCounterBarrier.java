@@ -6,15 +6,12 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import io.quarkiverse.solace.i18n.SolaceLogging;
 
 class OutgoingMessagesUnsignedCounterBarrier {
     private final AtomicLong counter; // Treated as an unsigned long (i.e. range from 0 -> -1)
     private final Lock awaitLock = new ReentrantLock();
     private final Condition isZero = awaitLock.newCondition();
-
-    private static final Log logger = LogFactory.getLog(OutgoingMessagesUnsignedCounterBarrier.class);
 
     public OutgoingMessagesUnsignedCounterBarrier(long initialValue) {
         counter = new AtomicLong(initialValue);
@@ -64,7 +61,8 @@ class OutgoingMessagesUnsignedCounterBarrier {
         awaitLock.lock();
         try {
             if (timeout > 0) {
-                logger.info(String.format("Waiting for %s items, time remaining: %s %s", counter.get(), timeout, unit));
+                SolaceLogging.log
+                        .info(String.format("Waiting for %s items, time remaining: %s %s", counter.get(), timeout, unit));
                 final long expiry = unit.toMillis(timeout) + System.currentTimeMillis();
                 while (isGreaterThanZero()) {
                     long realTimeout = expiry - System.currentTimeMillis();
@@ -76,7 +74,7 @@ class OutgoingMessagesUnsignedCounterBarrier {
                 return true;
             } else if (timeout < 0) {
                 while (isGreaterThanZero()) {
-                    logger.info(String.format("Waiting for %s items", counter.get()));
+                    SolaceLogging.log.info(String.format("Waiting for %s items", counter.get()));
                     isZero.await(5, TimeUnit.SECONDS);
                 }
                 return true;
