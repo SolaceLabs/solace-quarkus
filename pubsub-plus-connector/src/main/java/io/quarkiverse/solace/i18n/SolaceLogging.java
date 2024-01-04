@@ -2,10 +2,7 @@ package io.quarkiverse.solace.i18n;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
-import org.jboss.logging.annotations.LogMessage;
-import org.jboss.logging.annotations.Message;
-import org.jboss.logging.annotations.MessageLogger;
-import org.jboss.logging.annotations.Once;
+import org.jboss.logging.annotations.*;
 
 /**
  * Logging for Solace PubSub Connector
@@ -30,12 +27,12 @@ public interface SolaceLogging extends BasicLogger {
     void messageSettled(String channel, String outcome, String reason);
 
     @LogMessage(level = Logger.Level.ERROR)
-    @Message(id = 55203, value = "Publishing error message to topic %s received from channel `%s` is unsuccessful, reason: %s")
-    void unsuccessfulToTopic(String topic, String channel, String reason);
+    @Message(id = 55203, value = "Publishing error message to topic %s received from channel `%s` is unsuccessful")
+    void unsuccessfulToTopic(String topic, String channel, @Cause Throwable cause);
 
     @LogMessage(level = Logger.Level.ERROR)
-    @Message(id = 55204, value = "A exception occurred when publishing to topic %s, reason: %s")
-    void publishException(String topic, String reason);
+    @Message(id = 55204, value = "A exception occurred when publishing to topic %s")
+    void publishException(String topic, @Cause Throwable cause);
 
     @LogMessage(level = Logger.Level.ERROR)
     @Message(id = 55205, value = "A exception occurred during shutdown %s")

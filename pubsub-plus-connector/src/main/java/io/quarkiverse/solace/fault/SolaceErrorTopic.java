@@ -58,7 +58,7 @@ public class SolaceErrorTopic implements SolaceFailureHandler {
                     ackSupport.settle(msg.getMessage(), MessageAcknowledgementConfiguration.Outcome.ACCEPTED);
                 })
                 .replaceWithVoid()
-                .onFailure().invoke(t -> SolaceLogging.log.unsuccessfulToTopic(errorTopic, channel, t.getMessage()))
+                .onFailure().invoke(t -> SolaceLogging.log.unsuccessfulToTopic(errorTopic, channel, t))
                 .emitOn(msg::runOnMessageContext)
                 .subscribeAsCompletionStage();
     }

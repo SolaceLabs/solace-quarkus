@@ -22,6 +22,7 @@ class SolaceErrorTopicPublisherHandler implements PersistentMessagePublisher.Mes
         this.solace = solace;
 
         publisher = solace.createPersistentMessagePublisherBuilder().build();
+        publisher.setMessagePublishReceiptListener(this);
         publisher.start();
         outboundErrorMessageMapper = new OutboundErrorMessageMapper();
     }
@@ -32,7 +33,6 @@ class SolaceErrorTopicPublisherHandler implements PersistentMessagePublisher.Mes
         OutboundMessage outboundMessage = outboundErrorMessageMapper.mapError(this.solace.messageBuilder(),
                 message.getMessage(),
                 dmqEligible, timeToLive);
-        publisher.setMessagePublishReceiptListener(this);
         //        }
         return Uni.createFrom().<PublishReceipt> emitter(e -> {
             try {
@@ -41,7 +41,7 @@ class SolaceErrorTopicPublisherHandler implements PersistentMessagePublisher.Mes
             } catch (Throwable t) {
                 e.fail(t);
             }
-        }).onFailure().invoke(t -> SolaceLogging.log.publishException(errorTopic, t.getMessage()));
+        }).onFailure().invoke(t -> SolaceLogging.log.publishException(errorTopic, t));
     }
 
     @Override
