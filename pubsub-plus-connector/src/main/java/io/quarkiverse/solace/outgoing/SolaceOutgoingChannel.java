@@ -179,6 +179,7 @@ public class SolaceOutgoingChannel
 
     public void waitForPublishedMessages() {
         try {
+            SolaceLogging.log.info("Waiting for outgoing messages to be published");
             if (!publishedMessagesTracker.awaitEmpty(this.waitTimeout, TimeUnit.MILLISECONDS)) {
                 SolaceLogging.log.info(String.format("Timed out while waiting for the" +
                         " remaining messages to get publish acknowledgment."));
@@ -190,6 +191,7 @@ public class SolaceOutgoingChannel
     }
 
     public void close() {
+        waitForPublishedMessages();
         if (processor != null) {
             processor.cancel();
         }

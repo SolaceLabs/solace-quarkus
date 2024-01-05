@@ -55,7 +55,7 @@ public class SolaceRecorder {
                 }
 
                 var tmp = service;
-                shutdown.addShutdownTask(() -> {
+                shutdown.addLastShutdownTask(() -> {
                     if (tmp.isConnected()) {
                         tmp.disconnect();
                     }

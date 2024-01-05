@@ -173,6 +173,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     public void waitForUnAcknowledgedMessages() {
         try {
             receiver.pause();
+            SolaceLogging.log.info("Waiting for incoming channel messages to be acknowledged");
             if (!unacknowledgedMessageTracker.awaitEmpty(this.waitTimeout, TimeUnit.MILLISECONDS)) {
                 SolaceLogging.log.info(String.format("Timed out while waiting for the" +
                         " remaining messages to be acknowledged."));
@@ -184,6 +185,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     }
 
     public void close() {
+        waitForUnAcknowledgedMessages();
         closed.compareAndSet(false, true);
         if (this.pollerThread != null) {
             this.pollerThread.shutdown();
