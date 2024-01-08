@@ -36,8 +36,9 @@ public class SolaceOutgoingChannel
     private final Topic topic;
     private final SenderProcessor processor;
     private boolean isPublisherReady = true;
+    private boolean gracefulShutdown;
 
-    private long waitTimeout = -1;
+    private long gracefulShutdownWaitTimeout;
 
     // Assuming we won't ever exceed the limit of an unsigned long...
     private final OutgoingMessagesUnsignedCounterBarrier publishedMessagesTracker = new OutgoingMessagesUnsignedCounterBarrier();
@@ -56,7 +57,8 @@ public class SolaceOutgoingChannel
                 builder.onBackPressureWait(oc.getProducerBackPressureBufferCapacity());
                 break;
         }
-        this.waitTimeout = oc.getClientShutdownWaitTimeout();
+        this.gracefulShutdown = oc.getClientGracefulShutdown();
+        this.gracefulShutdownWaitTimeout = oc.getClientGracefulShutdownWaitTimeout();
         oc.getProducerDeliveryAckTimeout().ifPresent(builder::withDeliveryAckTimeout);
         oc.getProducerDeliveryAckWindowSize().ifPresent(builder::withDeliveryAckWindowSize);
         this.publisher = builder.build();
@@ -180,7 +182,7 @@ public class SolaceOutgoingChannel
     public void waitForPublishedMessages() {
         try {
             SolaceLogging.log.info("Waiting for outgoing messages to be published");
-            if (!publishedMessagesTracker.awaitEmpty(this.waitTimeout, TimeUnit.MILLISECONDS)) {
+            if (!publishedMessagesTracker.awaitEmpty(this.gracefulShutdownWaitTimeout, TimeUnit.MILLISECONDS)) {
                 SolaceLogging.log.info(String.format("Timed out while waiting for the" +
                         " remaining messages to get publish acknowledgment."));
             }
@@ -191,7 +193,9 @@ public class SolaceOutgoingChannel
     }
 
     public void close() {
-        waitForPublishedMessages();
+        if (this.gracefulShutdown) {
+            waitForPublishedMessages();
+        }
         if (processor != null) {
             processor.cancel();
         }

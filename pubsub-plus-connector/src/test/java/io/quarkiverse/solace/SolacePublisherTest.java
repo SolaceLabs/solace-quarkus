@@ -23,7 +23,6 @@ import io.quarkiverse.solace.base.WeldTestBase;
 import io.quarkiverse.solace.outgoing.SolaceOutboundMetadata;
 import io.quarkiverse.solace.outgoing.SolaceOutgoingChannel;
 import io.smallrye.mutiny.Multi;
-import io.smallrye.reactive.messaging.health.HealthReport;
 import io.smallrye.reactive.messaging.test.common.config.MapBasedConfig;
 import io.vertx.mutiny.core.Vertx;
 
@@ -124,14 +123,11 @@ public class SolacePublisherTest extends WeldTestBase {
         Multi.createFrom().range(0, 10)
                 .map(Message::of)
                 .subscribe((Flow.Subscriber<? super Message<Integer>>) solaceOutgoingChannel.getSubscriber());
-        await().until(() -> {
-            HealthReport.HealthReportBuilder builder = HealthReport.builder();
-            solaceOutgoingChannel.isReady(builder);
-            return builder.build().isOk();
-        });
+
+        solaceOutgoingChannel.close();
         // Assert on received messages
         await().untilAsserted(() -> assertThat(expected.size()).isEqualTo(10));
-        solaceOutgoingChannel.close();
+
     }
 
     //    @Test

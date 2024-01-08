@@ -45,7 +45,8 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     private final PersistentMessageReceiver receiver;
     private final Flow.Publisher<? extends Message<?>> stream;
     private final ExecutorService pollerThread;
-    private long waitTimeout = -1;
+    private boolean gracefulShutdown;
+    private long gracefulShutdownWaitTimeout;
 
     // Assuming we won't ever exceed the limit of an unsigned long...
     private final IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker = new IncomingMessagesUnsignedCounterBarrier();
@@ -53,7 +54,8 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     public SolaceIncomingChannel(Vertx vertx, SolaceConnectorIncomingConfiguration ic, MessagingService solace) {
         this.channel = ic.getChannel();
         this.context = Context.newInstance(((VertxInternal) vertx.getDelegate()).createEventLoopContext());
-        this.waitTimeout = ic.getClientShutdownWaitTimeout();
+        this.gracefulShutdown = ic.getClientGracefulShutdown();
+        this.gracefulShutdownWaitTimeout = ic.getClientGracefulShutdownWaitTimeout();
         DirectMessageReceiver r = solace.createDirectMessageReceiverBuilder().build();
         Outcome[] outcomes = new Outcome[] { Outcome.ACCEPTED };
         if (ic.getConsumerQueueSupportsNacks()) {
@@ -174,7 +176,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
         try {
             receiver.pause();
             SolaceLogging.log.info("Waiting for incoming channel messages to be acknowledged");
-            if (!unacknowledgedMessageTracker.awaitEmpty(this.waitTimeout, TimeUnit.MILLISECONDS)) {
+            if (!unacknowledgedMessageTracker.awaitEmpty(this.gracefulShutdownWaitTimeout, TimeUnit.MILLISECONDS)) {
                 SolaceLogging.log.info(String.format("Timed out while waiting for the" +
                         " remaining messages to be acknowledged."));
             }
@@ -185,7 +187,9 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     }
 
     public void close() {
-        waitForUnAcknowledgedMessages();
+        if (this.gracefulShutdown) {
+            waitForUnAcknowledgedMessages();
+        }
         closed.compareAndSet(false, true);
         if (this.pollerThread != null) {
             this.pollerThread.shutdown();
