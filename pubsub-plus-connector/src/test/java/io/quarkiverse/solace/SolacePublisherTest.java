@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Flow;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -20,8 +21,10 @@ import com.solace.messaging.resources.TopicSubscription;
 
 import io.quarkiverse.solace.base.WeldTestBase;
 import io.quarkiverse.solace.outgoing.SolaceOutboundMetadata;
+import io.quarkiverse.solace.outgoing.SolaceOutgoingChannel;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.reactive.messaging.test.common.config.MapBasedConfig;
+import io.vertx.mutiny.core.Vertx;
 
 public class SolacePublisherTest extends WeldTestBase {
 
@@ -97,6 +100,34 @@ public class SolacePublisherTest extends WeldTestBase {
         MyApp app = runApplication(config, MyApp.class);
         // Assert on published messages
         await().untilAsserted(() -> assertThat(app.getAcked().size()).isLessThan(5));
+    }
+
+    @Test
+    void publisherGracefulCloseTest() {
+        MapBasedConfig config = new MapBasedConfig()
+                .with("channel-name", "out")
+                .with("producer.topic", topic);
+
+        List<String> expected = new CopyOnWriteArrayList<>();
+
+        // Start listening first
+        PersistentMessageReceiver receiver = messagingService.createPersistentMessageReceiverBuilder()
+                .withSubscriptions(TopicSubscription.of(topic))
+                .build(Queue.nonDurableExclusiveQueue());
+        receiver.receiveAsync(inboundMessage -> expected.add(inboundMessage.getPayloadAsString()));
+        receiver.start();
+
+        SolaceOutgoingChannel solaceOutgoingChannel = new SolaceOutgoingChannel(Vertx.vertx(),
+                new SolaceConnectorOutgoingConfiguration(config), messagingService);
+        // Publish messages
+        Multi.createFrom().range(0, 10)
+                .map(Message::of)
+                .subscribe((Flow.Subscriber<? super Message<Integer>>) solaceOutgoingChannel.getSubscriber());
+
+        solaceOutgoingChannel.close();
+        // Assert on received messages
+        await().untilAsserted(() -> assertThat(expected.size()).isEqualTo(10));
+
     }
 
     //    @Test

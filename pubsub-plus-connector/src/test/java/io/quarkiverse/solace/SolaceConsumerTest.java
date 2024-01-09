@@ -6,12 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.*;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
 import org.awaitility.Durations;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -26,8 +27,11 @@ import com.solace.messaging.resources.Topic;
 
 import io.quarkiverse.solace.base.SolaceContainer;
 import io.quarkiverse.solace.base.WeldTestBase;
+import io.quarkiverse.solace.incoming.SolaceIncomingChannel;
 import io.quarkiverse.solace.logging.SolaceTestAppender;
+import io.smallrye.mutiny.Multi;
 import io.smallrye.reactive.messaging.test.common.config.MapBasedConfig;
+import io.vertx.mutiny.core.Vertx;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class SolaceConsumerTest extends WeldTestBase {
@@ -220,6 +224,51 @@ public class SolaceConsumerTest extends WeldTestBase {
 
     @Test
     @Order(7)
+    void consumerGracefulCloseTest() {
+        MapBasedConfig config = new MapBasedConfig()
+                .with("channel-name", "in")
+                .with("consumer.queue.name", queue)
+                .with("consumer.queue.add-additional-subscriptions", true)
+                .with("consumer.queue.missing-resource-creation-strategy", "create-on-start")
+                .with("consumer.queue.subscriptions", topic);
+
+        // Initialize incoming channel to consumes messages
+        SolaceIncomingChannel solaceIncomingChannel = new SolaceIncomingChannel(Vertx.vertx(),
+                new SolaceConnectorIncomingConfiguration(config), messagingService);
+
+        CopyOnWriteArrayList<Object> list = new CopyOnWriteArrayList<>();
+        CopyOnWriteArrayList<Object> ackedMessageList = new CopyOnWriteArrayList<>();
+
+        Flow.Publisher<? extends Message<?>> stream = solaceIncomingChannel.getStream();
+        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+        Multi.createFrom().publisher(stream).subscribe().with(message -> {
+            list.add(message);
+            executorService.schedule(() -> {
+                ackedMessageList.add(message);
+                CompletableFuture.runAsync(message::ack);
+            }, 1, TimeUnit.SECONDS);
+        });
+
+        // Produce messages
+        PersistentMessagePublisher publisher = messagingService.createPersistentMessagePublisherBuilder()
+                .build()
+                .start();
+        Topic tp = Topic.of(topic);
+        publisher.publish("1", tp);
+        publisher.publish("2", tp);
+        publisher.publish("3", tp);
+        publisher.publish("4", tp);
+        publisher.publish("5", tp);
+
+        await().until(() -> list.size() == 5);
+        // Assert on acknowledged messages
+        solaceIncomingChannel.close();
+        await().atMost(2, TimeUnit.MINUTES).until(() -> ackedMessageList.size() == 5);
+        executorService.shutdown();
+    }
+
+    @Test
+    @Order(8)
     void consumerCreateMissingResourceAddSubscriptionPermissionException() {
         MapBasedConfig config = new MapBasedConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")

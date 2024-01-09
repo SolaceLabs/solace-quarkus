@@ -70,12 +70,24 @@ class OutgoingMessagesUnsignedCounterBarrier {
                         return false;
                     }
                     isZero.await(realTimeout, TimeUnit.MILLISECONDS);
+                    SolaceLogging.log
+                            .info(String.format("Items remaining: %s", counter.get()));
+                    if (counter.get() == 0l) {
+                        SolaceLogging.log
+                                .info(String.format("All outgoing channel messages are published"));
+                    }
                 }
                 return true;
             } else if (timeout < 0) {
                 while (isGreaterThanZero()) {
                     SolaceLogging.log.info(String.format("Waiting for %s items", counter.get()));
                     isZero.await(5, TimeUnit.SECONDS);
+                    SolaceLogging.log
+                            .info(String.format("Items remaining: %s", counter.get()));
+                    if (counter.get() == 0l) {
+                        SolaceLogging.log
+                                .info(String.format("All outgoing channel messages are published"));
+                    }
                 }
                 return true;
             } else {

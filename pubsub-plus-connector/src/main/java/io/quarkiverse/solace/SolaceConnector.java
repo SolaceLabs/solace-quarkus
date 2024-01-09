@@ -22,10 +22,8 @@ import org.eclipse.microprofile.reactive.messaging.spi.Connector;
 
 import com.solace.messaging.MessagingService;
 
-import io.quarkiverse.solace.i18n.SolaceLogging;
 import io.quarkiverse.solace.incoming.SolaceIncomingChannel;
 import io.quarkiverse.solace.outgoing.SolaceOutgoingChannel;
-import io.quarkus.runtime.ShutdownEvent;
 import io.smallrye.reactive.messaging.annotations.ConnectorAttribute;
 import io.smallrye.reactive.messaging.connector.InboundConnector;
 import io.smallrye.reactive.messaging.connector.OutboundConnector;
@@ -40,7 +38,8 @@ import io.vertx.mutiny.core.Vertx;
 // TODO only persisted is implemented
 //@ConnectorAttribute(name = "client.type", type = "string", direction = INCOMING_AND_OUTGOING, description = "Direct or persisted", defaultValue = "persisted")
 @ConnectorAttribute(name = "client.lazy.start", type = "boolean", direction = INCOMING_AND_OUTGOING, description = "Whether the receiver or publisher is started at initialization or lazily at subscription time", defaultValue = "false")
-@ConnectorAttribute(name = "client.shutdown.wait-timeout", type = "long", direction = INCOMING_AND_OUTGOING, description = "Timeout in milliseconds to wait for messages to finish processing before shutdown", defaultValue = "10000")
+@ConnectorAttribute(name = "client.graceful-shutdown", type = "boolean", direction = INCOMING_AND_OUTGOING, description = "Whether to shutdown client gracefully", defaultValue = "true")
+@ConnectorAttribute(name = "client.graceful-shutdown.wait-timeout", type = "long", direction = INCOMING_AND_OUTGOING, description = "Timeout in milliseconds to wait for messages to finish processing before shutdown", defaultValue = "10000")
 @ConnectorAttribute(name = "consumer.queue.name", type = "string", direction = INCOMING, description = "The queue name of receiver")
 @ConnectorAttribute(name = "consumer.queue.type", type = "string", direction = INCOMING, description = "The queue type of receiver", defaultValue = "durable-non-exclusive")
 @ConnectorAttribute(name = "consumer.queue.missing-resource-creation-strategy", type = "string", direction = INCOMING, description = "Missing resource creation strategy", defaultValue = "do-not-create")
@@ -50,8 +49,6 @@ import io.vertx.mutiny.core.Vertx;
 @ConnectorAttribute(name = "consumer.queue.replay.strategy", type = "string", direction = INCOMING, description = "The receiver replay strategy")
 @ConnectorAttribute(name = "consumer.queue.replay.timebased-start-time", type = "string", direction = INCOMING, description = "The receiver replay timebased start time")
 @ConnectorAttribute(name = "consumer.queue.replay.replication-group-message-id", type = "string", direction = INCOMING, description = "The receiver replay replication group message id")
-// TODO implement consumer concurrency
-//@ConnectorAttribute(name = "consumer.queue.concurrency", type = "int", direction = INCOMING, description = "The number of concurrent consumers", defaultValue = "1")
 @ConnectorAttribute(name = "consumer.queue.failure-strategy", type = "string", direction = INCOMING, description = "Specify the failure strategy to apply when a message consumed from Solace broker is nacked. Accepted values are `ignore` (default), `fail`, `discard`, `error_topic`.", defaultValue = "ignore")
 @ConnectorAttribute(name = "consumer.queue.error.topic", type = "string", direction = INCOMING, description = "The error topic where message should be published in case of error")
 @ConnectorAttribute(name = "consumer.queue.error.message.dmq-eligible", type = "boolean", direction = INCOMING, description = "Whether error message is eligible to move to dead message queue", defaultValue = "false")
@@ -80,18 +77,6 @@ public class SolaceConnector implements InboundConnector, OutboundConnector, Hea
 
     List<SolaceIncomingChannel> incomingChannels = new CopyOnWriteArrayList<>();
     List<SolaceOutgoingChannel> outgoingChannels = new CopyOnWriteArrayList<>();
-
-    public void onStop(@Observes ShutdownEvent shutdownEvent) {
-        if (solace.isConnected()) {
-            SolaceLogging.log.info("Waiting incoming channel messages to be acknowledged");
-            incomingChannels.forEach(SolaceIncomingChannel::waitForUnAcknowledgedMessages);
-            SolaceLogging.log.info("All incoming channel messages are acknowledged");
-
-            SolaceLogging.log.info("Waiting for outgoing messages to be published");
-            outgoingChannels.forEach(SolaceOutgoingChannel::waitForPublishedMessages);
-            SolaceLogging.log.info("All outgoing messages are published");
-        }
-    }
 
     public void terminate(
             @Observes(notifyObserver = Reception.IF_EXISTS) @Priority(50) @BeforeDestroyed(ApplicationScoped.class) Object event) {
