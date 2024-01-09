@@ -45,8 +45,8 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     private final PersistentMessageReceiver receiver;
     private final Flow.Publisher<? extends Message<?>> stream;
     private final ExecutorService pollerThread;
-    private boolean gracefulShutdown;
-    private long gracefulShutdownWaitTimeout;
+    private final boolean gracefulShutdown;
+    private final long gracefulShutdownWaitTimeout;
 
     // Assuming we won't ever exceed the limit of an unsigned long...
     private final IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker = new IncomingMessagesUnsignedCounterBarrier();

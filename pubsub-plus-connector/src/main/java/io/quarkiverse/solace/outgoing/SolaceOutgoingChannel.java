@@ -35,10 +35,9 @@ public class SolaceOutgoingChannel
     private final Flow.Subscriber<? extends Message<?>> subscriber;
     private final Topic topic;
     private final SenderProcessor processor;
+    private final boolean gracefulShutdown;
+    private final long gracefulShutdownWaitTimeout;
     private boolean isPublisherReady = true;
-    private boolean gracefulShutdown;
-
-    private long gracefulShutdownWaitTimeout;
 
     // Assuming we won't ever exceed the limit of an unsigned long...
     private final OutgoingMessagesUnsignedCounterBarrier publishedMessagesTracker = new OutgoingMessagesUnsignedCounterBarrier();
