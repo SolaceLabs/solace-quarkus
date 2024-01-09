@@ -37,7 +37,7 @@ public class SolaceOutgoingChannel
     private final SenderProcessor processor;
     private final boolean gracefulShutdown;
     private final long gracefulShutdownWaitTimeout;
-    private boolean isPublisherReady = true;
+    private volatile boolean isPublisherReady = true;
 
     // Assuming we won't ever exceed the limit of an unsigned long...
     private final OutgoingMessagesUnsignedCounterBarrier publishedMessagesTracker = new OutgoingMessagesUnsignedCounterBarrier();

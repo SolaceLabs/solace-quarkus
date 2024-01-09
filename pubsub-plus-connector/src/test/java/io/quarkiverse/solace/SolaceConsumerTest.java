@@ -237,16 +237,16 @@ public class SolaceConsumerTest extends WeldTestBase {
                 new SolaceConnectorIncomingConfiguration(config), messagingService);
 
         CopyOnWriteArrayList<Object> list = new CopyOnWriteArrayList<>();
+        CopyOnWriteArrayList<Object> ackedMessageList = new CopyOnWriteArrayList<>();
 
         Flow.Publisher<? extends Message<?>> stream = solaceIncomingChannel.getStream();
+        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
         Multi.createFrom().publisher(stream).subscribe().with(message -> {
-            ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
             list.add(message);
             executorService.schedule(() -> {
+                ackedMessageList.add(message);
                 CompletableFuture.runAsync(message::ack);
-                list.remove(message);
             }, 1, TimeUnit.SECONDS);
-            executorService.shutdown();
         });
 
         // Produce messages
@@ -260,10 +260,11 @@ public class SolaceConsumerTest extends WeldTestBase {
         publisher.publish("4", tp);
         publisher.publish("5", tp);
 
-        // Assert on consumed messages
         await().until(() -> list.size() == 5);
+        // Assert on acknowledged messages
         solaceIncomingChannel.close();
-        await().atMost(2, TimeUnit.MINUTES).until(() -> list.size() == 0);
+        await().atMost(2, TimeUnit.MINUTES).until(() -> ackedMessageList.size() == 5);
+        executorService.shutdown();
     }
 
     @Test
