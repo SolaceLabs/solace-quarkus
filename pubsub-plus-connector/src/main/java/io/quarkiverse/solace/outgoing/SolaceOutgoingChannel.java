@@ -1,9 +1,12 @@
 package io.quarkiverse.solace.outgoing;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.eclipse.microprofile.reactive.messaging.Message;
 
@@ -39,6 +42,7 @@ public class SolaceOutgoingChannel
     private final boolean gracefulShutdown;
     private final long gracefulShutdownWaitTimeout;
     private final AtomicBoolean alive = new AtomicBoolean(false);
+    private final List<Throwable> failures = new ArrayList<>();
     private volatile boolean isPublisherReady = true;
     private volatile MessagingService solace;
 
@@ -71,7 +75,10 @@ public class SolaceOutgoingChannel
         boolean lazyStart = oc.getClientLazyStart();
         this.topic = Topic.of(oc.getProducerTopic().orElse(this.channel));
         this.processor = new SenderProcessor(oc.getProducerMaxInflightMessages(), oc.getProducerWaitForPublishReceipt(),
-                m -> sendMessage(solace, m, oc.getProducerWaitForPublishReceipt()), this::reportFailure);
+                m -> sendMessage(solace, m, oc.getProducerWaitForPublishReceipt()).onFailure().invoke((t) -> {
+                    failures.add(t);
+                    alive.set(false);
+                }));
         this.subscriber = MultiUtils.via(processor, multi -> multi.plug(
                 m -> lazyStart ? m.onSubscription().call(() -> Uni.createFrom().completionStage(publisher.startAsync())) : m));
         if (!lazyStart) {
@@ -86,11 +93,6 @@ public class SolaceOutgoingChannel
         });
     }
 
-    private void reportFailure(Throwable throwable) {
-        // should we send cause of failure in isAlive method?
-        alive.set(false);
-    }
-
     private Uni<Void> sendMessage(MessagingService solace, Message<?> m, boolean waitForPublishReceipt) {
 
         // TODO - Use isPublisherReady to check if publisher is in ready state before publishing. This is required when back-pressure is set to reject. We need to block this call till isPublisherReady is true
@@ -103,6 +105,7 @@ public class SolaceOutgoingChannel
                     return Uni.createFrom().completionStage(m.getAck());
                 })
                 .onFailure().recoverWithUni(t -> {
+                    failures.add(t);
                     alive.set(false);
                     return Uni.createFrom().completionStage(m.nack(t));
                 });
@@ -236,7 +239,17 @@ public class SolaceOutgoingChannel
     }
 
     public void isAlive(HealthReport.HealthReportBuilder builder) {
-        builder.add(channel, solace.isConnected() && alive.get());
+        List<Throwable> reportedFailures;
+        if (!failures.isEmpty()) {
+            synchronized (this) {
+                reportedFailures = new ArrayList<>(failures);
+            }
+            builder.add(channel, solace.isConnected() && alive.get(),
+                    reportedFailures.stream().map(Throwable::getMessage).collect(Collectors.joining()));
+            failures.removeAll(reportedFailures);
+        } else {
+            builder.add(channel, solace.isConnected() && alive.get());
+        }
     }
 
     @Override

@@ -100,7 +100,10 @@ public class SolaceConsumerHealthTest extends WeldTestBase {
         assertThat(readiness.getChannels()).hasSize(1);
 
         publisher.publish("3", tp);
-        await().until(() -> getHealth().getLiveness().isOk() == false);
+        await().until(() -> {
+            HealthReport healthReport = getHealth().getLiveness();
+            return (healthReport.isOk() == false && !healthReport.getChannels().get(0).getMessage().isEmpty());
+        });
 
         publisher.publish("4", tp);
         publisher.publish("5", tp);

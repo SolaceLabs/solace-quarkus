@@ -85,6 +85,7 @@ public class SolaceProducerHealthCheck extends WeldTestBase {
         assertThat(startup.getChannels()).hasSize(1);
         assertThat(liveness.getChannels()).hasSize(1);
         assertThat(readiness.getChannels()).hasSize(1);
+        assertThat(liveness.getChannels().get(0).getMessage()).isNotEmpty();
     }
 
     @ApplicationScoped

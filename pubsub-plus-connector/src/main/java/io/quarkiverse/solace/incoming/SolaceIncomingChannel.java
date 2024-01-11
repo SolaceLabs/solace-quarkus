@@ -4,12 +4,15 @@ import static io.quarkiverse.solace.i18n.SolaceExceptions.ex;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import org.eclipse.microprofile.reactive.messaging.Message;
 
@@ -48,6 +51,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     private final ExecutorService pollerThread;
     private final boolean gracefulShutdown;
     private final long gracefulShutdownWaitTimeout;
+    private final List<Throwable> failures = new ArrayList<>();
     private volatile MessagingService solace;
 
     // Assuming we won't ever exceed the limit of an unsigned long...
@@ -117,14 +121,17 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
                                 .call(() -> Uni.createFrom().completionStage(receiver.startAsync()))
                         : m)
                 .onItem().invoke(() -> alive.set(true))
-                .onFailure().retry().withBackOff(Duration.ofSeconds(1)).atMost(3).onFailure().invoke(() -> alive.set(false));
+                .onFailure().retry().withBackOff(Duration.ofSeconds(1)).atMost(3).onFailure().invoke((t) -> {
+                    failures.add(t);
+                    alive.set(false);
+                });
         if (!lazyStart) {
             receiver.start();
         }
     }
 
     private void reportFailure(Throwable throwable) {
-        // should we send cause of failure in isAlive method?
+        failures.add(throwable);
         alive.set(false);
     }
 
@@ -223,7 +230,18 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     }
 
     public void isAlive(HealthReport.HealthReportBuilder builder) {
-        builder.add(channel, solace.isConnected() && alive.get());
+        List<Throwable> reportedFailures;
+        if (!failures.isEmpty()) {
+            synchronized (this) {
+                reportedFailures = new ArrayList<>(failures);
+            }
+
+            builder.add(channel, solace.isConnected() && alive.get(),
+                    reportedFailures.stream().map(Throwable::getMessage).collect(Collectors.joining()));
+            failures.removeAll(reportedFailures);
+        } else {
+            builder.add(channel, solace.isConnected() && alive.get());
+        }
     }
 
     @Override
