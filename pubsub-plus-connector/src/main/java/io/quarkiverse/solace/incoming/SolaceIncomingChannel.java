@@ -4,12 +4,15 @@ import static io.quarkiverse.solace.i18n.SolaceExceptions.ex;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import org.eclipse.microprofile.reactive.messaging.Message;
 
@@ -42,16 +45,20 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     private final SolaceAckHandler ackHandler;
     private final SolaceFailureHandler failureHandler;
     private final AtomicBoolean closed = new AtomicBoolean(false);
+    private final AtomicBoolean alive = new AtomicBoolean(false);
     private final PersistentMessageReceiver receiver;
     private final Flow.Publisher<? extends Message<?>> stream;
     private final ExecutorService pollerThread;
     private final boolean gracefulShutdown;
     private final long gracefulShutdownWaitTimeout;
+    private final List<Throwable> failures = new ArrayList<>();
+    private volatile MessagingService solace;
 
     // Assuming we won't ever exceed the limit of an unsigned long...
     private final IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker = new IncomingMessagesUnsignedCounterBarrier();
 
     public SolaceIncomingChannel(Vertx vertx, SolaceConnectorIncomingConfiguration ic, MessagingService solace) {
+        this.solace = solace;
         this.channel = ic.getChannel();
         this.context = Context.newInstance(((VertxInternal) vertx.getDelegate()).createEventLoopContext());
         this.gracefulShutdown = ic.getClientGracefulShutdown();
@@ -108,13 +115,24 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
                 .until(__ -> closed.get())
                 .emitOn(context::runOnContext)
                 .map(consumed -> new SolaceInboundMessage<>(consumed, ackHandler, failureHandler,
-                        unacknowledgedMessageTracker))
-                .plug(m -> lazyStart ? m.onSubscription().call(() -> Uni.createFrom().completionStage(receiver.startAsync()))
+                        unacknowledgedMessageTracker, this::reportFailure))
+                .plug(m -> lazyStart
+                        ? m.onSubscription()
+                                .call(() -> Uni.createFrom().completionStage(receiver.startAsync()))
                         : m)
-                .onFailure().retry().withBackOff(Duration.ofSeconds(1)).atMost(3);
+                .onItem().invoke(() -> alive.set(true))
+                .onFailure().retry().withBackOff(Duration.ofSeconds(1)).atMost(3).onFailure().invoke((t) -> {
+                    failures.add(t);
+                    alive.set(false);
+                });
         if (!lazyStart) {
             receiver.start();
         }
+    }
+
+    private void reportFailure(Throwable throwable) {
+        failures.add(throwable);
+        alive.set(false);
     }
 
     private SolaceFailureHandler createFailureHandler(SolaceConnectorIncomingConfiguration ic, MessagingService solace) {
@@ -204,15 +222,26 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     }
 
     public void isStarted(HealthReport.HealthReportBuilder builder) {
-
+        builder.add(channel, solace.isConnected());
     }
 
     public void isReady(HealthReport.HealthReportBuilder builder) {
-
+        builder.add(channel, solace.isConnected() && receiver != null && receiver.isRunning());
     }
 
     public void isAlive(HealthReport.HealthReportBuilder builder) {
+        List<Throwable> reportedFailures;
+        if (!failures.isEmpty()) {
+            synchronized (this) {
+                reportedFailures = new ArrayList<>(failures);
+            }
 
+            builder.add(channel, solace.isConnected() && alive.get(),
+                    reportedFailures.stream().map(Throwable::getMessage).collect(Collectors.joining()));
+            failures.removeAll(reportedFailures);
+        } else {
+            builder.add(channel, solace.isConnected() && alive.get());
+        }
     }
 
     @Override

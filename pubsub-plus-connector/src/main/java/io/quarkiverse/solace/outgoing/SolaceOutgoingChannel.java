@@ -1,8 +1,12 @@
 package io.quarkiverse.solace.outgoing;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.eclipse.microprofile.reactive.messaging.Message;
 
@@ -37,12 +41,16 @@ public class SolaceOutgoingChannel
     private final SenderProcessor processor;
     private final boolean gracefulShutdown;
     private final long gracefulShutdownWaitTimeout;
+    private final AtomicBoolean alive = new AtomicBoolean(false);
+    private final List<Throwable> failures = new ArrayList<>();
     private volatile boolean isPublisherReady = true;
+    private volatile MessagingService solace;
 
     // Assuming we won't ever exceed the limit of an unsigned long...
     private final OutgoingMessagesUnsignedCounterBarrier publishedMessagesTracker = new OutgoingMessagesUnsignedCounterBarrier();
 
     public SolaceOutgoingChannel(Vertx vertx, SolaceConnectorOutgoingConfiguration oc, MessagingService solace) {
+        this.solace = solace;
         this.channel = oc.getChannel();
         PersistentMessagePublisherBuilder builder = solace.createPersistentMessagePublisherBuilder();
         switch (oc.getProducerBackPressureStrategy()) {
@@ -67,7 +75,10 @@ public class SolaceOutgoingChannel
         boolean lazyStart = oc.getClientLazyStart();
         this.topic = Topic.of(oc.getProducerTopic().orElse(this.channel));
         this.processor = new SenderProcessor(oc.getProducerMaxInflightMessages(), oc.getProducerWaitForPublishReceipt(),
-                m -> sendMessage(solace, m, oc.getProducerWaitForPublishReceipt()));
+                m -> sendMessage(solace, m, oc.getProducerWaitForPublishReceipt()).onFailure().invoke((t) -> {
+                    failures.add(t);
+                    alive.set(false);
+                }));
         this.subscriber = MultiUtils.via(processor, multi -> multi.plug(
                 m -> lazyStart ? m.onSubscription().call(() -> Uni.createFrom().completionStage(publisher.startAsync())) : m));
         if (!lazyStart) {
@@ -87,12 +98,17 @@ public class SolaceOutgoingChannel
         // TODO - Use isPublisherReady to check if publisher is in ready state before publishing. This is required when back-pressure is set to reject. We need to block this call till isPublisherReady is true
         return publishMessage(publisher, m, solace.messageBuilder(), waitForPublishReceipt)
                 .onItem().transformToUni(receipt -> {
+                    alive.set(true);
                     if (receipt != null) {
                         OutgoingMessageMetadata.setResultOnMessage(m, receipt);
                     }
                     return Uni.createFrom().completionStage(m.getAck());
                 })
-                .onFailure().recoverWithUni(t -> Uni.createFrom().completionStage(m.nack(t)));
+                .onFailure().recoverWithUni(t -> {
+                    failures.add(t);
+                    alive.set(false);
+                    return Uni.createFrom().completionStage(m.nack(t));
+                });
 
     }
 
@@ -215,15 +231,25 @@ public class SolaceOutgoingChannel
     }
 
     public void isStarted(HealthReport.HealthReportBuilder builder) {
-
+        builder.add(channel, solace.isConnected());
     }
 
     public void isReady(HealthReport.HealthReportBuilder builder) {
-
+        builder.add(channel, solace.isConnected() && this.publisher != null && this.publisher.isReady());
     }
 
     public void isAlive(HealthReport.HealthReportBuilder builder) {
-
+        List<Throwable> reportedFailures;
+        if (!failures.isEmpty()) {
+            synchronized (this) {
+                reportedFailures = new ArrayList<>(failures);
+            }
+            builder.add(channel, solace.isConnected() && alive.get(),
+                    reportedFailures.stream().map(Throwable::getMessage).collect(Collectors.joining()));
+            failures.removeAll(reportedFailures);
+        } else {
+            builder.add(channel, solace.isConnected() && alive.get());
+        }
     }
 
     @Override
