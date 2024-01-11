@@ -3,6 +3,7 @@ package io.quarkiverse.solace.incoming;
 import static io.smallrye.reactive.messaging.providers.locals.ContextAwareMessage.captureContextMetadata;
 
 import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
 
 import org.eclipse.microprofile.reactive.messaging.Metadata;
 
@@ -22,16 +23,18 @@ public class SolaceInboundMessage<T> implements ContextAwareMessage<T>, Metadata
     private final SolaceFailureHandler nackHandler;
     private final T payload;
     private final IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker;
+    private final Consumer<Throwable> reportFailure;
     private Metadata metadata;
 
     public SolaceInboundMessage(InboundMessage message, SolaceAckHandler ackHandler, SolaceFailureHandler nackHandler,
-            IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker) {
+            IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker, Consumer<Throwable> reportFailure) {
         this.msg = message;
         this.unacknowledgedMessageTracker = unacknowledgedMessageTracker;
         this.payload = (T) convertPayload();
         this.ackHandler = ackHandler;
         this.nackHandler = nackHandler;
         this.metadata = captureContextMetadata(new SolaceInboundMetadata(message));
+        this.reportFailure = reportFailure;
     }
 
     public InboundMessage getMessage() {
@@ -88,6 +91,7 @@ public class SolaceInboundMessage<T> implements ContextAwareMessage<T>, Metadata
     @Override
     public CompletionStage<Void> nack(Throwable reason, Metadata nackMetadata) {
         this.unacknowledgedMessageTracker.decrement();
+        this.reportFailure.accept(reason);
         return nackHandler.handle(this, reason, nackMetadata);
 
         //        if (solaceErrorTopicPublisherHandler == null) {

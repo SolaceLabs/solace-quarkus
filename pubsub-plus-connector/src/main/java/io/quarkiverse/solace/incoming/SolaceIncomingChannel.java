@@ -42,16 +42,19 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     private final SolaceAckHandler ackHandler;
     private final SolaceFailureHandler failureHandler;
     private final AtomicBoolean closed = new AtomicBoolean(false);
+    private final AtomicBoolean alive = new AtomicBoolean(false);
     private final PersistentMessageReceiver receiver;
     private final Flow.Publisher<? extends Message<?>> stream;
     private final ExecutorService pollerThread;
     private final boolean gracefulShutdown;
     private final long gracefulShutdownWaitTimeout;
+    private volatile MessagingService solace;
 
     // Assuming we won't ever exceed the limit of an unsigned long...
     private final IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker = new IncomingMessagesUnsignedCounterBarrier();
 
     public SolaceIncomingChannel(Vertx vertx, SolaceConnectorIncomingConfiguration ic, MessagingService solace) {
+        this.solace = solace;
         this.channel = ic.getChannel();
         this.context = Context.newInstance(((VertxInternal) vertx.getDelegate()).createEventLoopContext());
         this.gracefulShutdown = ic.getClientGracefulShutdown();
@@ -108,13 +111,21 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
                 .until(__ -> closed.get())
                 .emitOn(context::runOnContext)
                 .map(consumed -> new SolaceInboundMessage<>(consumed, ackHandler, failureHandler,
-                        unacknowledgedMessageTracker))
-                .plug(m -> lazyStart ? m.onSubscription().call(() -> Uni.createFrom().completionStage(receiver.startAsync()))
+                        unacknowledgedMessageTracker, this::reportFailure))
+                .plug(m -> lazyStart
+                        ? m.onSubscription()
+                                .call(() -> Uni.createFrom().completionStage(receiver.startAsync()))
                         : m)
-                .onFailure().retry().withBackOff(Duration.ofSeconds(1)).atMost(3);
+                .onItem().invoke(() -> alive.set(true))
+                .onFailure().retry().withBackOff(Duration.ofSeconds(1)).atMost(3).onFailure().invoke(() -> alive.set(false));
         if (!lazyStart) {
             receiver.start();
         }
+    }
+
+    private void reportFailure(Throwable throwable) {
+        // should we send cause of failure in isAlive method?
+        alive.set(false);
     }
 
     private SolaceFailureHandler createFailureHandler(SolaceConnectorIncomingConfiguration ic, MessagingService solace) {
@@ -204,15 +215,15 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     }
 
     public void isStarted(HealthReport.HealthReportBuilder builder) {
-
+        builder.add(channel, solace.isConnected());
     }
 
     public void isReady(HealthReport.HealthReportBuilder builder) {
-
+        builder.add(channel, solace.isConnected() && receiver != null && receiver.isRunning());
     }
 
     public void isAlive(HealthReport.HealthReportBuilder builder) {
-
+        builder.add(channel, solace.isConnected() && alive.get());
     }
 
     @Override

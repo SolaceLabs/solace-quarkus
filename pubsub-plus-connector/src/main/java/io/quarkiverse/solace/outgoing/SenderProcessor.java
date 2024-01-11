@@ -6,6 +6,7 @@ import java.util.concurrent.Flow.Processor;
 import java.util.concurrent.Flow.Subscriber;
 import java.util.concurrent.Flow.Subscription;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.eclipse.microprofile.reactive.messaging.Message;
@@ -20,11 +21,14 @@ class SenderProcessor implements Processor<Message<?>, Message<?>>, Subscription
     private final Function<Message<?>, Uni<Void>> send;
     private final AtomicReference<Subscription> subscription = new AtomicReference<>();
     private final AtomicReference<Subscriber<? super Message<?>>> downstream = new AtomicReference<>();
+    private final Consumer<Throwable> reportFailure;
 
-    public SenderProcessor(long inflights, boolean waitForCompletion, Function<Message<?>, Uni<Void>> send) {
+    public SenderProcessor(long inflights, boolean waitForCompletion, Function<Message<?>, Uni<Void>> send,
+            Consumer<Throwable> reportFailure) {
         this.inflights = inflights;
         this.waitForCompletion = waitForCompletion;
         this.send = send;
+        this.reportFailure = reportFailure;
     }
 
     @Override
@@ -101,6 +105,7 @@ class SenderProcessor implements Processor<Message<?>, Message<?>>, Subscription
         Subscriber<? super Message<?>> subscriber = downstream.getAndSet(null);
         if (subscriber != null) {
             subscriber.onError(throwable);
+            reportFailure.accept(throwable);
         }
     }
 
