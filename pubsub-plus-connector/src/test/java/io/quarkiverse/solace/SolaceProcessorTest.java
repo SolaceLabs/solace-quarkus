@@ -27,7 +27,7 @@ public class SolaceProcessorTest extends WeldTestBase {
 
     @Test
     void consumer() {
-        String processedTopic = topic + "-processed";
+        String processedTopic = topic + "/processed";
         MapBasedConfig config = new MapBasedConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")

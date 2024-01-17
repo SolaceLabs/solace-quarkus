@@ -22,7 +22,7 @@ import io.smallrye.mutiny.Multi;
 import io.smallrye.reactive.messaging.health.HealthReport;
 import io.smallrye.reactive.messaging.test.common.config.MapBasedConfig;
 
-public class SolaceProducerHealthCheck extends WeldTestBase {
+public class SolacePublisherHealthCheck extends WeldTestBase {
     @Test
     void publisherHealthCheck() {
         MapBasedConfig config = new MapBasedConfig()
