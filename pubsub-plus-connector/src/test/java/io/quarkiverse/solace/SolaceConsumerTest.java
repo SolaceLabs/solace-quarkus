@@ -27,6 +27,7 @@ import com.solace.messaging.resources.Topic;
 
 import io.quarkiverse.solace.base.SolaceContainer;
 import io.quarkiverse.solace.base.WeldTestBase;
+import io.quarkiverse.solace.incoming.SolaceInboundMessage;
 import io.quarkiverse.solace.incoming.SolaceIncomingChannel;
 import io.quarkiverse.solace.logging.SolaceTestAppender;
 import io.smallrye.mutiny.Multi;
@@ -50,7 +51,7 @@ public class SolaceConsumerTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", topic);
+                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", "quarkus/integration/test/replay/messages");
 
         // Run app that consumes messages
         MyConsumer app = runApplication(config, MyConsumer.class);
@@ -59,7 +60,7 @@ public class SolaceConsumerTest extends WeldTestBase {
         PersistentMessagePublisher publisher = messagingService.createPersistentMessagePublisherBuilder()
                 .build()
                 .start();
-        Topic tp = Topic.of(topic);
+        Topic tp = Topic.of("quarkus/integration/test/replay/messages");
         publisher.publish("1", tp);
         publisher.publish("2", tp);
         publisher.publish("3", tp);
@@ -79,7 +80,7 @@ public class SolaceConsumerTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", topic)
+                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", "quarkus/integration/test/replay/messages")
                 .with("mp.messaging.incoming.in.consumer.queue.replay.strategy", "all-messages");
 
         // Run app that consumes messages
@@ -294,8 +295,9 @@ public class SolaceConsumerTest extends WeldTestBase {
         private final List<String> received = new CopyOnWriteArrayList<>();
 
         @Incoming("in")
-        void in(InboundMessage msg) {
-            received.add(msg.getPayloadAsString());
+        CompletionStage<Void> in(SolaceInboundMessage<byte[]> msg) {
+            received.add(msg.getMessage().getPayloadAsString());
+            return msg.ack();
         }
 
         public List<String> getReceived() {
