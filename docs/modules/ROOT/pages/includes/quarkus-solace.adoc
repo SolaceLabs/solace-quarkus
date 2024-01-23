@@ -120,40 +120,6 @@ endif::add-copy-button-to-env-var[]
 |`solace`
 
 
-a| [[quarkus-solace_quarkus.solace.host]]`link:#quarkus-solace_quarkus.solace.host[quarkus.solace.host]`
-
-
-[.description]
---
-The Solace host (hostname:port)
-
-ifdef::add-copy-button-to-env-var[]
-Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_HOST+++[]
-endif::add-copy-button-to-env-var[]
-ifndef::add-copy-button-to-env-var[]
-Environment variable: `+++QUARKUS_SOLACE_HOST+++`
-endif::add-copy-button-to-env-var[]
---|string 
-|required icon:exclamation-circle[title=Configuration property is required]
-
-
-a| [[quarkus-solace_quarkus.solace.vpn]]`link:#quarkus-solace_quarkus.solace.vpn[quarkus.solace.vpn]`
-
-
-[.description]
---
-The Solace VPN
-
-ifdef::add-copy-button-to-env-var[]
-Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_VPN+++[]
-endif::add-copy-button-to-env-var[]
-ifndef::add-copy-button-to-env-var[]
-Environment variable: `+++QUARKUS_SOLACE_VPN+++`
-endif::add-copy-button-to-env-var[]
---|string 
-|required icon:exclamation-circle[title=Configuration property is required]
-
-
 a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus.solace.devservices.container-env-container-env]]`link:#quarkus-solace_quarkus.solace.devservices.container-env-container-env[quarkus.solace.devservices.container-env]`
 
 
@@ -166,23 +132,6 @@ Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_CON
 endif::add-copy-button-to-env-var[]
 ifndef::add-copy-button-to-env-var[]
 Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_CONTAINER_ENV+++`
-endif::add-copy-button-to-env-var[]
---|`Map<String,String>` 
-|
-
-
-a| [[quarkus-solace_quarkus.solace-extra]]`link:#quarkus-solace_quarkus.solace-extra[quarkus.solace]`
-
-
-[.description]
---
-Any extra parameters to pass to the Solace client
-
-ifdef::add-copy-button-to-env-var[]
-Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE+++[]
-endif::add-copy-button-to-env-var[]
-ifndef::add-copy-button-to-env-var[]
-Environment variable: `+++QUARKUS_SOLACE+++`
 endif::add-copy-button-to-env-var[]
 --|`Map<String,String>` 
 |

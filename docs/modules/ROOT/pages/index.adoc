@@ -7,14 +7,14 @@ TIP: Solace Quarkus Extension for integrating with Solace PubSub+ message broker
 
 == Installation
 
-If you want to use this extension, you need to add the `io.quarkiverse.solace:quarkus-solace` extension first to your build file.
+If you want to use this extension, you need to add the `com.solace.quarkus:quarkus-solace` extension first to your build file.
 
 For instance, with Maven, add the following dependency to your POM file:
 
 [source,xml,subs=attributes+]
 ----
 <dependency>
-    <groupId>io.quarkiverse.solace</groupId>
+    <groupId>com.solace.quarkus</groupId>
     <artifactId>quarkus-solace</artifactId>
     <version>{project-version}</version>
 </dependency>

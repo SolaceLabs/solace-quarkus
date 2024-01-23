@@ -31,7 +31,7 @@ a| [[quarkus-solace_quarkus.consumer.queue.type]]`link:#quarkus-solace_quarkus.c
 
 [.description]
 --
-The queue type of receiver.
+The queue type of receiver. Supported values `durable-exclusive`, `durable-non-exclusive`, `non-durable-exclusive`
 
 // ifdef::add-copy-button-to-env-var[]
 // Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_HEALTH_ENABLED+++[]
@@ -40,7 +40,7 @@ The queue type of receiver.
 // Environment variable: `+++QUARKUS_SOLACE_HEALTH_ENABLED+++`
 // endif::add-copy-button-to-env-var[]
 --|string
-|`durable-non-exclusive`
+|`durable-exclusive`
 
 
 a| [[quarkus-solace_quarkus.consumer.queue.missing-resource-creation-strategy]]`link:#quarkus-solace_quarkus.consumer.queue.missing-resource-creation-strategy[consumer.queue.missing-resource-creation-strategy]`
@@ -263,6 +263,6 @@ Whether to enable negative acknowledgments on failed messages. Nacks are support
 // Environment variable: `+++QUARKUS_SOLACE+++`
 // endif::add-copy-button-to-env-var[]
 --|`boolean`
-| `true`
+| `false`
 
 |===
