@@ -176,7 +176,13 @@ a| [[quarkus-solace_quarkus.solace-extra]]`link:#quarkus-solace_quarkus.solace-e
 
 [.description]
 --
-Any extra parameters to pass to the Solace client
+Any extra parameters to pass to the Solace client.  +
+ +
+ +
+Refer to link:https://docs.solace.com/API-Developer-Online-Ref-Documentation/pubsubplus-java/constant-values.html#com.solace.messaging.config.SolaceProperties.AuthenticationProperties.SCHEME[AuthenticationProperties] and link:https://docs.solace.com/API-Developer-Online-Ref-Documentation/pubsubplus-java/constant-values.html#com.solace.messaging.config.SolaceProperties.TransportLayerProperties.COMPRESSION_LEVEL[TransportLayerProperties] for more configuration options  +
+ +
+ +
+Example: To configure compression `quarkus.solace.transport.compression-level`
 
 ifdef::add-copy-button-to-env-var[]
 Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE+++[]

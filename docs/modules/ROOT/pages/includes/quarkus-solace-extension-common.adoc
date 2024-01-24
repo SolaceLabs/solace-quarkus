@@ -1,0 +1,62 @@
+
+:summaryTableId: quarkus-solace-extension-common
+Common configuration for Solace Quarkus Extension Incoming and Outgoing channels
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[[quarkus-solace_configuration_common]]link:#quarkus-solace_configuration_common[Configuration property]
+
+h|Type
+h|Default
+
+a| [[quarkus-solace_quarkus.client.lazy.start]]`link:#quarkus-solace_quarkus.client.lazy.start[client.lazy.start]`
+
+
+[.description]
+--
+Whether the receiver or publisher is started at initialization or lazily at subscription time.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_METRICS_ENABLED+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_METRICS_ENABLED+++`
+// endif::add-copy-button-to-env-var[]
+--|boolean
+| `false`
+
+
+a| [[quarkus-solace_quarkus.client.graceful-shutdown]]`link:#quarkus-solace_quarkus.client.graceful-shutdown[client.graceful-shutdown]`
+
+
+[.description]
+--
+Whether to shutdown client gracefully.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_HEALTH_ENABLED+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_HEALTH_ENABLED+++`
+// endif::add-copy-button-to-env-var[]
+--|boolean
+|`true`
+
+
+a| [[quarkus-solace_quarkus.client.graceful-shutdown.wait-timeout]]`link:#quarkus-solace_quarkus.client.graceful-shutdown.wait-timeout[client.graceful-shutdown.wait-timeout]`
+
+
+[.description]
+--
+Timeout in milliseconds to wait for messages to finish processing before shutdown.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_ENABLED+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_ENABLED+++`
+// endif::add-copy-button-to-env-var[]
+--|long
+|`10000`
+
+|===
