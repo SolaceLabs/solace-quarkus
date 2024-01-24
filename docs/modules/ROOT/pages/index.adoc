@@ -23,8 +23,6 @@ For instance, with Maven, add the following dependency to your POM file:
 [[extension-configuration-reference]]
 == Extension Configuration Reference
 
-TIP: Remove this section if you don't have Quarkus configuration properties in your extension.
-
 include::includes/quarkus-solace.adoc[leveloffset=+1, opts=optional]
 
 [[extension-incoming-configuration-reference]]
@@ -36,3 +34,8 @@ include::includes/quarkus-solace-extension-incoming.adoc[leveloffset=+1, opts=op
 == Outgoing Configuration Reference
 
 include::includes/quarkus-solace-extension-outgoing.adoc[leveloffset=+1, opts=optional]
+
+[[extension-common-configuration-reference]]
+== Common Configuration Reference
+
+include::includes/quarkus-solace-extension-common.adoc[leveloffset=+1, opts=optional]
