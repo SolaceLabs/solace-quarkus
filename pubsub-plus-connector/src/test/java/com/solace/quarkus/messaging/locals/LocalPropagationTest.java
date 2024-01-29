@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -196,14 +195,7 @@ public class LocalPropagationTest extends WeldTestBase {
             Vertx.currentContext().putLocal("uuid", value);
             Vertx.currentContext().putLocal("input", payload);
 
-            return input.withPayload(payload + 1)
-                    .withAck(() -> {
-                        CompletableFuture<Void> cf = new CompletableFuture<>();
-                        executor.execute(() -> {
-                            cf.complete(null);
-                        });
-                        return cf;
-                    });
+            return input.withPayload(payload + 1);
         }
 
         @Incoming("process")
