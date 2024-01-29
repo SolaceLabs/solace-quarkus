@@ -52,7 +52,6 @@ public class HelloConsumer {
      */
     @Incoming("dynamic-destination-in")
     @Outgoing("dynamic-destination-out")
-    @Acknowledgment(Acknowledgment.Strategy.MANUAL)
     Message<?> consumeAndPublishToDynamicTopic(SolaceInboundMessage<?> p) {
         Log.infof("Received message: %s from topic: %s", new String(p.getMessage().getPayloadAsBytes(), StandardCharsets.UTF_8),
                 p.getMessage().getDestinationName());
@@ -60,8 +59,7 @@ public class HelloConsumer {
                 .setApplicationMessageId("test")
                 .setDynamicDestination("hello/foobar/" + p.getMessage().getApplicationMessageId())
                 .createPubSubOutboundMetadata();
-        Message<?> outboundMessage = Message.of(p.getPayload(), Metadata.of(outboundMetadata));
-        return outboundMessage;
+        return p.addMetadata(outboundMetadata).withAck(() -> p.ack());
     }
 
 }
