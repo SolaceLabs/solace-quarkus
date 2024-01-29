@@ -1,10 +1,11 @@
 name: Solace
 description: Solace Quarkus Extension for integrating with Solace PubSub+ message brokers. The extension provides the ability to publish or consume events from event mesh.
 metadata:
-#  keywords:
-#    - solace
-#    - pubsubplus event broker
+  keywords:
+    - solace
+    - pubsubplus event broker
+    - event driven integration
 #  guide: https://quarkiverse.github.io/quarkiverse-docs/solace/dev/ # To create and publish this guide, see https://github.com/quarkiverse/quarkiverse/wiki#documenting-your-extension
-#  categories:
-#    - "miscellaneous"
-#  status: "preview"
+  categories:
+    - "messaging"
+  status: "preview"
