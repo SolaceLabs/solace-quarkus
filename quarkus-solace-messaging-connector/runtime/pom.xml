@@ -5,13 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.solace.quarkus</groupId>
-        <artifactId>quarkus-solace-parent</artifactId>
+        <artifactId>quarkus-solace-messaging-connector-parent</artifactId>
         <version>999-SNAPSHOT</version>
     </parent>
-
     <artifactId>quarkus-solace-messaging-connector</artifactId>
-    <name>Quarkus Solace Messaging Connector</name>
-
+    <name>Quarkus Solace Messaging Connector - Runtime</name>
     <dependencies>
         <dependency>
             <groupId>io.smallrye.config</groupId>
