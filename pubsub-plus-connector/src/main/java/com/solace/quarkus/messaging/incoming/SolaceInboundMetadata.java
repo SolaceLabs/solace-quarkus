@@ -129,4 +129,8 @@ public class SolaceInboundMetadata {
         return msg.getProperties();
     }
 
+    public String getPartitionKey() {
+        return msg.getProperties().get("JMSXGroupID");
+    }
+
 }

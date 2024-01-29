@@ -29,6 +29,7 @@ import com.solace.quarkus.messaging.base.WeldTestBase;
 import com.solace.quarkus.messaging.incoming.SolaceInboundMessage;
 import com.solace.quarkus.messaging.incoming.SolaceIncomingChannel;
 import com.solace.quarkus.messaging.logging.SolaceTestAppender;
+import com.solacesystems.jcsmp.XMLMessage;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.reactive.messaging.test.common.config.MapBasedConfig;
@@ -192,6 +193,52 @@ public class SolaceConsumerTest extends WeldTestBase {
 
     @Test
     @Order(6)
+    void partitionedQueue() {
+        MapBasedConfig config = new MapBasedConfig()
+                .with("mp.messaging.incoming.consumer-1.connector", "quarkus-solace")
+                .with("mp.messaging.incoming.consumer-1.consumer.queue.name",
+                        SolaceContainer.INTEGRATION_TEST_PARTITION_QUEUE_NAME)
+                .with("mp.messaging.incoming.consumer-1.consumer.queue.type", "durable-non-exclusive")
+                .with("mp.messaging.incoming.consumer-2.connector", "quarkus-solace")
+                .with("mp.messaging.incoming.consumer-2.consumer.queue.name",
+                        SolaceContainer.INTEGRATION_TEST_PARTITION_QUEUE_NAME)
+                .with("mp.messaging.incoming.consumer-2.consumer.queue.type", "durable-non-exclusive");
+
+        // Run app that consumes messages
+        MyPartitionedQueueConsumer app = runApplication(config, MyPartitionedQueueConsumer.class);
+        CopyOnWriteArrayList<String> group1PartitionPayloads = new CopyOnWriteArrayList<>();
+        CopyOnWriteArrayList<String> group2PartitionPayloads = new CopyOnWriteArrayList<>();
+        // Produce messages
+        PersistentMessagePublisher publisher = messagingService.createPersistentMessagePublisherBuilder()
+                .build()
+                .start();
+        Topic tp = Topic.of(SolaceContainer.INTEGRATION_TEST_PARTITION_QUEUE_SUBSCRIPTION);
+        for (int i = 0; i < 1000; i++) {
+            String partitionKey = "Group-1";
+            if (i % 2 == 0) {
+                partitionKey = "Group-2";
+                group2PartitionPayloads.add(Integer.toString(i));
+            } else {
+                group1PartitionPayloads.add(Integer.toString(i));
+            }
+
+            OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
+            messageBuilder.withProperty(XMLMessage.MessageUserPropertyConstants.QUEUE_PARTITION_KEY, partitionKey);
+            OutboundMessage outboundMessage = messageBuilder.build(Integer.toString(i));
+            publisher.publish(outboundMessage, tp);
+        }
+
+        // Assert on published messages
+        await().untilAsserted(() -> assertThat(app.getReceivedMessagesOnPartitionConsumer1().size())
+                .isEqualTo(group1PartitionPayloads.size()));
+        await().untilAsserted(() -> app.getReceivedMessagesOnPartitionConsumer1().containsAll(group1PartitionPayloads));
+        await().untilAsserted(() -> assertThat(app.getReceivedMessagesOnPartitionConsumer2().size())
+                .isEqualTo(group2PartitionPayloads.size()));
+        await().untilAsserted(() -> app.getReceivedMessagesOnPartitionConsumer2().containsAll(group2PartitionPayloads));
+    }
+
+    @Test
+    @Order(7)
     void consumerPublishToErrorTopicPermissionException() {
         MapBasedConfig config = new MapBasedConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
@@ -224,7 +271,7 @@ public class SolaceConsumerTest extends WeldTestBase {
     }
 
     @Test
-    @Order(7)
+    @Order(8)
     void consumerGracefulCloseTest() {
         MapBasedConfig config = new MapBasedConfig()
                 .with("channel-name", "in")
@@ -269,7 +316,7 @@ public class SolaceConsumerTest extends WeldTestBase {
     }
 
     @Test
-    @Order(8)
+    @Order(9)
     void consumerCreateMissingResourceAddSubscriptionPermissionException() {
         MapBasedConfig config = new MapBasedConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
@@ -351,6 +398,37 @@ public class SolaceConsumerTest extends WeldTestBase {
 
         public List<String> getReceivedFailedMessages() {
             return receivedFailedMessages;
+        }
+    }
+
+    @ApplicationScoped
+    static class MyPartitionedQueueConsumer {
+        private final List<String> receivedMessagesOnPartitionConsumer1 = new CopyOnWriteArrayList<>();
+
+        private List<String> receivedMessagesOnPartitionConsumer2 = new CopyOnWriteArrayList<>();
+
+        @Incoming("consumer-1")
+        CompletionStage<Void> consumer1(SolaceInboundMessage<?> msg) {
+            receivedMessagesOnPartitionConsumer1.add(msg.getMessage().getPayloadAsString());
+            return msg.ack();
+        }
+
+        @Incoming("consumer-2")
+        CompletionStage<Void> consumer2(SolaceInboundMessage<?> msg) {
+            receivedMessagesOnPartitionConsumer2.add(msg.getMessage().getPayloadAsString());
+            return msg.ack();
+        }
+
+        public List<String> getReceivedMessagesOnPartitionConsumer1() {
+            return receivedMessagesOnPartitionConsumer1;
+        }
+
+        public List<String> getReceivedMessagesOnPartitionConsumer2() {
+            return receivedMessagesOnPartitionConsumer2;
+        }
+
+        public void setReceivedMessagesOnPartitionConsumer2(List<String> receivedMessagesOnPartitionConsumer2) {
+            this.receivedMessagesOnPartitionConsumer2 = receivedMessagesOnPartitionConsumer2;
         }
     }
 }

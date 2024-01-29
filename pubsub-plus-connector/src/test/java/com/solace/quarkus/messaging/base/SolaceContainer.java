@@ -24,6 +24,9 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
     public static final String INTEGRATION_TEST_ERROR_QUEUE_NAME = "integration-test-error-queue";
     public static final String INTEGRATION_TEST_ERROR_QUEUE_SUBSCRIPTION = "quarkus/integration/test/provisioned/queue/error/topic";
 
+    public static final String INTEGRATION_TEST_PARTITION_QUEUE_NAME = "integration-test-partition-queue";
+    public static final String INTEGRATION_TEST_PARTITION_QUEUE_SUBSCRIPTION = "quarkus/integration/test/provisioned/partition/queue/topic";
+
     private static final DockerImageName DEFAULT_IMAGE_NAME = DockerImageName.parse("solace/solace-pubsub-standard");
 
     private static final String DEFAULT_VPN = "default";
@@ -133,6 +136,20 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
         updateConfigScript(scriptBuilder, "max-spool-usage 300");
         updateConfigScript(scriptBuilder, "permission all consume");
         updateConfigScript(scriptBuilder, "dead-message-queue " + INTEGRATION_TEST_DMQ_NAME);
+        updateConfigScript(scriptBuilder, "no shutdown");
+        updateConfigScript(scriptBuilder, "exit");
+        updateConfigScript(scriptBuilder, "exit");
+
+        // Partitioned Queue
+        updateConfigScript(scriptBuilder, "message-spool message-vpn default");
+        updateConfigScript(scriptBuilder, "create queue " + INTEGRATION_TEST_PARTITION_QUEUE_NAME);
+        updateConfigScript(scriptBuilder, "access-type non-exclusive");
+        updateConfigScript(scriptBuilder, "subscription topic " + INTEGRATION_TEST_PARTITION_QUEUE_SUBSCRIPTION);
+        updateConfigScript(scriptBuilder, "max-spool-usage 300");
+        updateConfigScript(scriptBuilder, "permission all consume");
+        updateConfigScript(scriptBuilder, "partition");
+        updateConfigScript(scriptBuilder, "count 3");
+        updateConfigScript(scriptBuilder, "exit");
         updateConfigScript(scriptBuilder, "no shutdown");
         updateConfigScript(scriptBuilder, "exit");
         updateConfigScript(scriptBuilder, "exit");

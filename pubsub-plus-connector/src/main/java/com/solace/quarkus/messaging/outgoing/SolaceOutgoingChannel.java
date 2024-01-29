@@ -21,6 +21,7 @@ import com.solace.messaging.publisher.PublisherHealthCheck;
 import com.solace.messaging.resources.Topic;
 import com.solace.quarkus.messaging.SolaceConnectorOutgoingConfiguration;
 import com.solace.quarkus.messaging.i18n.SolaceLogging;
+import com.solacesystems.jcsmp.XMLMessage;
 
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.smallrye.mutiny.Uni;
@@ -144,6 +145,10 @@ public class SolaceOutgoingChannel
             }
             if (metadata.getClassOfService() != null) {
                 msgBuilder.withClassOfService(metadata.getClassOfService());
+            }
+            if (metadata.getPartitionKey() != null) {
+                msgBuilder.withProperty(XMLMessage.MessageUserPropertyConstants.QUEUE_PARTITION_KEY,
+                        metadata.getPartitionKey());
             }
 
             if (metadata.getDynamicDestination() != null) {
