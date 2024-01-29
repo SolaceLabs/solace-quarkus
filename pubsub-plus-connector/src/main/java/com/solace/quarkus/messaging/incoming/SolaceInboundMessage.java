@@ -4,6 +4,8 @@ import static io.smallrye.reactive.messaging.providers.locals.ContextAwareMessag
 
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.eclipse.microprofile.reactive.messaging.Metadata;
 
@@ -80,6 +82,16 @@ public class SolaceInboundMessage<T> implements ContextAwareMessage<T>, Metadata
     @Override
     public Metadata getMetadata() {
         return metadata;
+    }
+
+    @Override
+    public Supplier<CompletionStage<Void>> getAck() {
+        return this::ack;
+    }
+
+    @Override
+    public Function<Throwable, CompletionStage<Void>> getNack() {
+        return this::nack;
     }
 
     @Override

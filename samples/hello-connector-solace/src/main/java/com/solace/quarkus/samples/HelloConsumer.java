@@ -59,7 +59,7 @@ public class HelloConsumer {
                 .setApplicationMessageId("test")
                 .setDynamicDestination("hello/foobar/" + p.getMessage().getApplicationMessageId())
                 .createPubSubOutboundMetadata();
-        return p.addMetadata(outboundMetadata).withAck(() -> p.ack());
+        return p.addMetadata(outboundMetadata);
     }
 
 }
