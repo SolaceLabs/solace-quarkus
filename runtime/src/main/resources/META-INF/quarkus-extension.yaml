@@ -5,6 +5,7 @@ metadata:
     - solace
     - pubsubplus event broker
     - event driven integration
+    - reactive-solace
 #  guide: https://quarkiverse.github.io/quarkiverse-docs/solace/dev/ # To create and publish this guide, see https://github.com/quarkiverse/quarkiverse/wiki#documenting-your-extension
   categories:
     - "messaging"
