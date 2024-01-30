@@ -8,12 +8,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import com.solace.messaging.config.SolaceConstants;
 import org.eclipse.microprofile.reactive.messaging.Message;
 
 import com.solace.messaging.MessagingService;
 import com.solace.messaging.PersistentMessagePublisherBuilder;
 import com.solace.messaging.PubSubPlusClientException;
+import com.solace.messaging.config.SolaceConstants;
 import com.solace.messaging.publisher.OutboundMessage;
 import com.solace.messaging.publisher.OutboundMessageBuilder;
 import com.solace.messaging.publisher.PersistentMessagePublisher;
@@ -22,7 +22,6 @@ import com.solace.messaging.publisher.PublisherHealthCheck;
 import com.solace.messaging.resources.Topic;
 import com.solace.quarkus.messaging.SolaceConnectorOutgoingConfiguration;
 import com.solace.quarkus.messaging.i18n.SolaceLogging;
-import com.solacesystems.jcsmp.XMLMessage;
 
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.smallrye.mutiny.Uni;

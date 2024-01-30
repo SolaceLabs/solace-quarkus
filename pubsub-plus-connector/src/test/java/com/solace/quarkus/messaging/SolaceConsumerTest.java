@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.solace.messaging.config.SolaceConstants;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import org.awaitility.Durations;
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import com.solace.messaging.config.SolaceConstants;
 import com.solace.messaging.config.SolaceProperties;
 import com.solace.messaging.publisher.OutboundMessage;
 import com.solace.messaging.publisher.OutboundMessageBuilder;
@@ -29,7 +29,6 @@ import com.solace.quarkus.messaging.base.WeldTestBase;
 import com.solace.quarkus.messaging.incoming.SolaceInboundMessage;
 import com.solace.quarkus.messaging.incoming.SolaceIncomingChannel;
 import com.solace.quarkus.messaging.logging.SolaceTestAppender;
-import com.solacesystems.jcsmp.XMLMessage;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.reactive.messaging.test.common.config.MapBasedConfig;
@@ -215,7 +214,7 @@ public class SolaceConsumerTest extends WeldTestBase {
         // Run app that consumes messages
         MyPartitionedQueueConsumer app = runApplication(config, MyPartitionedQueueConsumer.class);
 
-        CopyOnWriteArrayList<String> partitionKeys = new CopyOnWriteArrayList<>(){
+        CopyOnWriteArrayList<String> partitionKeys = new CopyOnWriteArrayList<>() {
             {
                 add("Group-1");
                 add("Group-2");
@@ -223,7 +222,7 @@ public class SolaceConsumerTest extends WeldTestBase {
                 add("Group-4");
             }
         };
-        Map<String, Integer> partitionMessages = new HashMap<>(){
+        Map<String, Integer> partitionMessages = new HashMap<>() {
             {
                 put(partitionKeys.get(0), 0);
                 put(partitionKeys.get(1), 0);
@@ -426,7 +425,7 @@ public class SolaceConsumerTest extends WeldTestBase {
 
     @ApplicationScoped
     static class MyPartitionedQueueConsumer {
-        Map<String, Integer> partitionMessages = new HashMap<>(){
+        Map<String, Integer> partitionMessages = new HashMap<>() {
             {
                 put("Group-1", 0);
                 put("Group-2", 0);
@@ -460,7 +459,8 @@ public class SolaceConsumerTest extends WeldTestBase {
         }
 
         private void updatePartitionMessages(SolaceInboundMessage<?> msg) {
-            String partitionKey = msg.getMessage().getProperty(SolaceConstants.MessageUserPropertyConstants.QUEUE_PARTITION_KEY);
+            String partitionKey = msg.getMessage()
+                    .getProperty(SolaceConstants.MessageUserPropertyConstants.QUEUE_PARTITION_KEY);
             int count = partitionMessages.get(partitionKey);
             partitionMessages.put(partitionKey, (count + 1));
         }

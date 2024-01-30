@@ -22,7 +22,6 @@ import com.solace.messaging.config.MessageAcknowledgementConfiguration.Outcome;
 import com.solace.messaging.config.MissingResourcesCreationConfiguration.MissingResourcesCreationStrategy;
 import com.solace.messaging.config.ReceiverActivationPassivationConfiguration;
 import com.solace.messaging.config.ReplayStrategy;
-import com.solace.messaging.receiver.DirectMessageReceiver;
 import com.solace.messaging.receiver.InboundMessage;
 import com.solace.messaging.receiver.PersistentMessageReceiver;
 import com.solace.messaging.resources.Queue;
