@@ -148,7 +148,7 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
         updateConfigScript(scriptBuilder, "max-spool-usage 300");
         updateConfigScript(scriptBuilder, "permission all consume");
         updateConfigScript(scriptBuilder, "partition");
-        updateConfigScript(scriptBuilder, "count 3");
+        updateConfigScript(scriptBuilder, "count 4");
         updateConfigScript(scriptBuilder, "exit");
         updateConfigScript(scriptBuilder, "no shutdown");
         updateConfigScript(scriptBuilder, "exit");

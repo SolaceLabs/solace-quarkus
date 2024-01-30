@@ -1,6 +1,7 @@
 package com.solace.quarkus.samples;
 
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -60,41 +61,6 @@ public class HelloConsumer {
                 .setDynamicDestination("hello/foobar/" + p.getMessage().getApplicationMessageId())
                 .createPubSubOutboundMetadata();
         return p.addMetadata(outboundMetadata);
-    }
-
-    @Incoming("partition-consumer-1-in")
-    CompletionStage<Void> partitionConsumer1(SolaceInboundMessage<?> message) {
-        Log.infof(
-                "Received message on partitionConsumer1 with partition key %s and payload %s",
-                message.getMessage().getProperties().get("JMSXGroupID"), message.getMessage().getPayloadAsString());
-
-        return message.ack();
-    }
-
-    @Incoming("partition-consumer-2-in")
-    CompletionStage<Void> partitionConsumer2(SolaceInboundMessage<?> message) {
-        Log.infof(
-                "Received message on partitionConsumer2 with partition key %s and payload %s",
-                message.getMessage().getProperties().get("JMSXGroupID"), message.getMessage().getPayloadAsString());
-        return message.ack();
-    }
-
-    @Outgoing("partition-publisher-out")
-    public Multi<Message<String>> partitionPublisher() {
-
-        return Multi.createFrom().range(0, 1000).map(mapper -> {
-            String partitionKey = "2";
-            if (mapper % 2 == 0) {
-                partitionKey = "1";
-            } else if (mapper % 3 == 0) {
-                partitionKey = "3";
-            }
-            SolaceOutboundMetadata outboundMetadata = SolaceOutboundMetadata.builder()
-                    .setPartitionKey(partitionKey)
-                    .createPubSubOutboundMetadata();
-            return Message.of("Hello World - " + mapper, Metadata.of(outboundMetadata),
-                    () -> CompletableFuture.completedFuture(null));
-        });
     }
 
 }

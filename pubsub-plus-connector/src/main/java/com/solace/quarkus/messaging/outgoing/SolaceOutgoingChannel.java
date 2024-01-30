@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import com.solace.messaging.config.SolaceConstants;
 import org.eclipse.microprofile.reactive.messaging.Message;
 
 import com.solace.messaging.MessagingService;
@@ -147,7 +148,7 @@ public class SolaceOutgoingChannel
                 msgBuilder.withClassOfService(metadata.getClassOfService());
             }
             if (metadata.getPartitionKey() != null) {
-                msgBuilder.withProperty(XMLMessage.MessageUserPropertyConstants.QUEUE_PARTITION_KEY,
+                msgBuilder.withProperty(SolaceConstants.MessageUserPropertyConstants.QUEUE_PARTITION_KEY,
                         metadata.getPartitionKey());
             }
 
@@ -201,13 +202,13 @@ public class SolaceOutgoingChannel
 
     public void waitForPublishedMessages() {
         try {
-            SolaceLogging.log.info("Waiting for outgoing messages to be published");
+            SolaceLogging.log.infof("Waiting for outgoing channel %s messages to be published", channel);
             if (!publishedMessagesTracker.awaitEmpty(this.gracefulShutdownWaitTimeout, TimeUnit.MILLISECONDS)) {
-                SolaceLogging.log.info(String.format("Timed out while waiting for the" +
-                        " remaining messages to get publish acknowledgment."));
+                SolaceLogging.log.infof("Timed out while waiting for the" +
+                        " remaining messages to be acknowledged on channel %s.", channel);
             }
         } catch (InterruptedException e) {
-            SolaceLogging.log.info(String.format("Interrupted while waiting for messages to get acknowledged"));
+            SolaceLogging.log.infof("Interrupted while waiting for messages on channel %s to get acknowledged", channel);
             throw new RuntimeException(e);
         }
     }
