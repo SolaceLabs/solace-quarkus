@@ -2,10 +2,19 @@
 
 include::./includes/attributes.adoc[]
 
-TIP: Solace Quarkus Extension for integrating with Solace PubSub+ message brokers. The extension provides the ability to publish or consume events from event mesh.
+== Introduction
 
+The https://solace.com/products/platform/[Solace PubSub+ Platform]'s https://solace.com/products/event-broker/software/[software event broker] efficiently streams event-driven information between applications, IoT devices and user interfaces running in the cloud, on-premises, and hybrid environments using open APIs and protocols like AMQP, JMS, MQTT, REST and WebSocket. It can be installed into a variety of public and private clouds, PaaS, and on-premises environments, and brokers in multiple locations can be linked together in an https://solace.com/what-is-an-event-mesh/[event mesh] to dynamically share events across the distributed enterprise.
 
-== Installation
+== Quarkus Extension for Solace
+
+Solace Quarkus Extension for integrating with Solace PubSub+ message brokers. The extension provides the ability to publish or consume events from event mesh.
+
+Users have the choice to use the extension in two ways
+
+{empty}1. `com.solace.quarkus:quarkus-solace-client`
+
+This extension provides only Solace Java Messaging API and users need to have their own implementation and configuration to interact with Solace PubSub+ broker.
 
 If you want to use this extension, you need to add the `com.solace.quarkus:quarkus-solace-client` extension first to your build file.
 
@@ -16,6 +25,23 @@ For instance, with Maven, add the following dependency to your POM file:
 <dependency>
     <groupId>com.solace.quarkus</groupId>
     <artifactId>quarkus-solace-client</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
+{empty}2. `com.solace.quarkus:quarkus-solace-messaging-connector`
+
+This extension is based on reactive messaging framework and provides pre-defined configurations for incoming and outgoing channels.
+
+If you want to use this extension, you need to add the `com.solace.quarkus:quarkus-solace-messaging-connector` extension first to your build file.
+
+For instance, with Maven, add the following dependency to your POM file:
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>com.solace.quarkus</groupId>
+    <artifactId>quarkus-solace-messaging-connector</artifactId>
     <version>{project-version}</version>
 </dependency>
 ----
@@ -39,3 +65,318 @@ include::includes/quarkus-solace-extension-outgoing.adoc[leveloffset=+1, opts=op
 == Common Configuration Reference
 
 include::includes/quarkus-solace-extension-common.adoc[leveloffset=+1, opts=optional]
+
+[[configuring-quarkus-solace-messaging-connector]]
+== Configuring Quarkus Solace Messaging Connector
+
+Reactive Messaging framework supports different messaging backends it employs a generic vocabulary:
+
+* Applications send and receive messages. A message wraps a payload and can be extended with some metadata. With the Solace connector, a message corresponds to Inbound or Outbound Message.
+
+* Messages transit on channels. Application components connect to channels to publish and consume messages. The Solace connector maps channels to Solace queues and topics.
+
+* Channels are connected to message backends using connectors. Connectors are configured to map incoming messages to a specific channel (consumed by the application) and collect outgoing messages sent to a specific channel. Each connector is dedicated to a specific messaging technology. For example, the connector dealing with Solace is named `quarkus-solace`.
+
+A minimal configuration for the Solace connector with an incoming channel looks like the following:
+
+The following lines of configuration assumes that a exclusive queue is already provisioned on the broker
+[source,properties]
+----
+quarkus.solace.host=tcp://localhost:55555
+quarkus.solace.vpn=default
+quarkus.solace.authentication.basic.username=basic
+quarkus.solace.authentication.basic.password=basic
+
+mp.messaging.incoming.in.connector=quarkus-solace
+mp.messaging.incoming.in.consumer.queue.name=temperatures
+----
+
+The extension also supports provisioning queues and subscriptions on broker given that the user has role access to create queues with subscriptions. Configuration is as follows
+
+[source,properties]
+----
+quarkus.solace.host=tcp://localhost:55555
+quarkus.solace.vpn=default
+quarkus.solace.authentication.basic.username=basic
+quarkus.solace.authentication.basic.password=basic
+
+mp.messaging.incoming.temperatures.connector=quarkus-solace
+mp.messaging.incoming.temperatures.consumer.queue.missing-resource-creation-strategy=create-on-start
+mp.messaging.incoming.temperatures.consumer.queue.add-additional-subscriptions=true
+mp.messaging.incoming.temperatures.consumer.queue.subscriptions=hello/foobar
+----
+
+1. When running in dev mode or tests dev services will automatically start a Solace PubSub+ broker and if broker configuration details are not provided the extension automatically picks up the details of broker started by dev services.
+
+2. If `consumer.queue.name` property is not specified, channel name will be used as queue name.
+
+[[receiving-messages-from-solace]]
+== Receiving messages from Solace
+
+Using the previous configuration, Quarkus application can receive message in several possible ways.
+
+__Direct Payload__
+[source,java]
+----
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import jakarta.enterprise.context.ApplicationScoped;
+@ApplicationScoped
+public class TemperaturesConsumer {
+    @Incoming("temperatures")
+    public void consume(Double temperature) {
+        // process.
+    }
+}
+----
+
+__Message__
+[source,java]
+----
+@ApplicationScoped
+public class TemperaturesConsumer {
+    @Incoming("temperatures")
+    public CompletionStage<Void> consume(Message<Double> msg) {
+        // access record metadata
+        SolaceInboundMetadata metadata = msg.getMetadata(SolaceInboundMetadata.class).orElseThrow();
+        // process the message payload.
+        Double temperature = msg.getPayload();
+        // Acknowledge the incoming message
+        return msg.ack();
+    }
+}
+----
+
+__SolaceInboundMessage__ This is a wrapper to incoming Inbound Message from Solace Messaging API
+[source,java]
+----
+@ApplicationScoped
+public class TemperaturesConsumer {
+    @Incoming("temperatures")
+    public void consume(SolaceInboundMessage<Double> solaceInboundMessage) {
+        // get actual inbound message
+        InboundMessage inboundMessage = solaceInboundMessage.getMessage();
+        // process the message payload.
+        Double temperature = solaceInboundMessage.getPayload();
+        // access record metadata
+        SolaceInboundMetadata metadata = solaceInboundMessage.getMetadata();
+        // ...
+        solaceInboundMessage.ack();
+    }
+}
+----
+
+__@Channel__
+
+Alternatively, your application can inject a Multi in your bean and subscribe to its events as the following example:
+
+[source,java]
+----
+import io.smallrye.mutiny.Multi;
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import org.jboss.resteasy.reactive.RestStreamElementType;
+
+@Path("/temperatures")
+public class TemperaturesResource {
+    @Inject
+    @Channel("temperatures")
+    Multi<Double> temperatures;
+
+    @GET
+    @Path("/temperatures")
+    @RestStreamElementType(MediaType.TEXT_PLAIN)
+    public Multi<Double> stream() {
+        return temperatures;
+    }
+}
+----
+
+[[acknowledgement-handling]]
+== Acknowledgment Handling
+
+By default, acknowledgement strategy is set to client acknowledgement. This gives greater control over acknowledgement and ensures that messages are acknowledged only after successful processing.
+
+[source,java]
+----
+@ApplicationScoped
+public class TemperaturesConsumer {
+    @Incoming("temperatures")
+    public CompletionStage<Void> consume(Message<Double> msg) {
+        // access record metadata
+        SolaceInboundMetadata metadata = msg.getMetadata(SolaceInboundMetadata.class).orElseThrow();
+        // process the message payload.
+        Double temperature = msg.getPayload();
+        // Acknowledge the incoming message
+        return msg.ack();
+    }
+}
+----
+
+[[failure-strategies]]
+== Failure Strategies
+
+If a message is nacked, a failure strategy is applied. Refer to `consumer.queue.failure-strategy` in <<extension-incoming-configuration-reference>>. The default strategy is set to `ignore` and move on to next message. Following are the strategies supported by Quarkus Solace Messaging Connector extension.
+
+`ignore` - Mark the message as IGNORED, will continue processing with next message. It TTL and DMQ are configured on the queue message will be moved to DMQ once TTL is reached. If no DMQ is configured but TTL is set message will be lost.
+
+`fail` - Mark the message as FAILED, broker will redeliver the message. Nacks are supported on event brokers 10.2.1 and later, so enable this strategy based on broker version.
+
+`discard` - Mark the message as REJECTED, broker will discard the message. The message will be moved to DMQ if DMQ is configured for queue and DMQ Eligible is set on message otherwise message will be lost. Nacks are supported on event brokers 10.2.1 and later, so enable this strategy based on broker version.
+
+`error_topic` - Will publish the message to configured error topic, on success the message will be acknowledged in the queue.
+
+[[sending-messages-to-solace]]
+== Sending messages to Solace
+
+Outgoing channel configuration to publish messages to Solace.
+
+[source,properties]
+----
+quarkus.solace.host=tcp://localhost:55555
+quarkus.solace.vpn=default
+quarkus.solace.authentication.basic.username=basic
+quarkus.solace.authentication.basic.password=basic
+
+mp.messaging.incoming.temperatures-out.connector=quarkus-solace
+mp.messaging.incoming.temperatures-out.producer.topic=temperatures
+----
+
+1. When running in dev mode or tests dev services will automatically start a Solace PubSub+ broker and if broker configuration details are not provided the extension automatically picks up the details of broker started by dev services.
+
+2. If `producer.topic` property is not specified, channel name will be used as topic name.
+
+Using the previous configuration Quarkus application can publish messages as follows
+
+[source,java]
+----
+import io.smallrye.mutiny.Multi;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import java.time.Duration;
+import java.util.Random;
+
+@ApplicationScoped
+public class TemperaturesProducer {
+
+    private final Random random = new Random();
+
+    @Outgoing("temperatures-out")
+    public Multi<Double> generate() {
+        // Emit 1000 records
+        return Multi.createFrom().range(0, 1000)
+            .map(x -> random.nextDouble());
+    }
+
+}
+----
+
+You can also generate a `org.eclipse.microprofile.reactive.messaging.Message` with required metadata and publish to Solace.
+
+[source,java]
+----
+@ApplicationScoped
+public class TemperaturesProducer {
+    private final Random random = new Random();
+
+    @Outgoing("temperatures-out")
+    Multi<Message<Double>> publishTemperatures() {
+        return Multi.createFrom().range(0, 1000)
+            .map(i -> {
+                 SolaceOutboundMetadata outboundMetadata = SolaceOutboundMetadata.builder()
+                .setApplicationMessageId(Integer.toString(i)).createPubSubOutboundMetadata();
+                 return Message.of(random.nextDouble(), Metadata.of(outboundMetadata));
+            });
+    }
+}
+----
+
+*SolaceOutboundMetadata* allows to configure metadata for the message. It supports all the headers supported by Solace and custom user properties. In addition to this it also supports configuring dynamic topic which overrides the default topic in application configuration file.
+
+Generating `org.eclipse.microprofile.reactive.messaging.Message` with dynamic topic and publish to Solace.
+
+[source,java]
+----
+@ApplicationScoped
+public class TemperaturesProducer {
+    private final Random random = new Random();
+
+    @Outgoing("temperatures-out")
+    Multi<Message<Double>> publishTemperatures() {
+        return Multi.createFrom().range(0, 1000)
+            .map(i -> {
+                 SolaceOutboundMetadata outboundMetadata = SolaceOutboundMetadata.builder()
+                .setApplicationMessageId(Integer.toString(i))
+                .setDynamicDestination("device/" + Integer.toString(i) + "/temperature").createPubSubOutboundMetadata();
+                 return Message.of(random.nextDouble(), Metadata.of(outboundMetadata));
+            });
+    }
+}
+----
+
+Sending messages with __@Emitter__
+
+[source,java]
+----
+@Path("/temperatures")
+public class PublisherResource {
+
+    @Channel("temperatures-out")
+    MutinyEmitter<Double> temperatureEmitter;
+
+    @POST
+    @Path("/publish")
+    public Uni<Void> publish(Double temperature) {
+        return temperatureEmitter.send(person);
+    }
+}
+----
+
+[[processing-messages]]
+== Processing Messages
+
+Applications streaming data often need to consume some events from a topic, process them and publish the result to a different topic. A processor method can be simply implemented using both the *@Incoming* and *@Outgoing* annotations:
+
+[source,java]
+----
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+
+import jakarta.enterprise.context.ApplicationScoped;
+
+@ApplicationScoped
+public class TemperaturesProcessor {
+
+    @Incoming("temperatures-in")
+    @Outgoing("temperatures-out")
+    public double process(double temperature) {
+        return (temperature - 32) * 5 / 9;
+    }
+
+}
+----
+
+[[health-checks]]
+== Health Checks
+
+Quarkus provides several health checks for Solace. These checks are used in combination with the *quarkus-smallrye-health* extension.
+
+=== Reactive Messaging Health Checks
+
+When using Reactive Messaging and the Quarkus Solace Messaging Connector, each configured channel (incoming or outgoing) provides startup, liveness and readiness checks.
+
+The startup check verifies that the communication with Solace Broker is established.
+
+The liveness check captures any unrecoverable failure happening during the communication with Solace.
+
+The readiness check verifies that the Quarkus Solace Messaging Connector is ready to consume/produce messages to the configured Solace queues/topics.
+
+[[metrics]]
+== Metrics
+
+Quarkus Solace Messaging Connector exposes different metrics provided by Solace Java Messaging API. The metrics are enabled by default and can be accessed at `http://localhost:8080/q/dev-ui/io.quarkus.quarkus-micrometer/prometheus`
+

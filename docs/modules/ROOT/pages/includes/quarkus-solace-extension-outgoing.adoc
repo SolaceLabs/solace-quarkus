@@ -1,6 +1,6 @@
 
 :summaryTableId: quarkus-solace-extension-outgoing
-Outgoing configuration for Solace Quarkus Extension
+Outgoing configuration for Quarkus Solace Messaging Connector
 [.configuration-reference.searchable, cols="80,.^10,.^10"]
 |===
 
