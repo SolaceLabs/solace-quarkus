@@ -15,7 +15,7 @@ import io.smallrye.reactive.messaging.MutinyEmitter;
 @Path("/hello")
 public class PublisherResource {
 
-    @Channel("hello")
+    @Channel("hello-out")
     MutinyEmitter<Person> foobar;
 
     /**

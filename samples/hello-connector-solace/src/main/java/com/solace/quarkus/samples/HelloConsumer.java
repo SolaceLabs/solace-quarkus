@@ -1,7 +1,6 @@
 package com.solace.quarkus.samples;
 
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -16,59 +15,51 @@ import io.smallrye.mutiny.Multi;
 
 @ApplicationScoped
 public class HelloConsumer {
+
     /**
-     * Publish a simple message using TryMe in Solace broker and you should see the message published to topic
+     * Publishes message to topic hello/foobar which is subscribed by queue.foobar
+     *
+     * @see #consumeMessage(SolaceInboundMessage)
+     * @return
+     */
+    @Outgoing("hello-out")
+    Multi<Message<String>> publishMessage() {
+        SolaceOutboundMetadata outboundMetadata = SolaceOutboundMetadata.builder()
+                .setApplicationMessageId("1").createPubSubOutboundMetadata();
+        return Multi.createFrom().items("1").map(m -> Message.of(m, Metadata.of(outboundMetadata)));
+    }
+
+    /**
+     * Receives message from queue - queue.foobar
      *
      * @param p
      */
     @Incoming("hello-in")
-    @Outgoing("hello-out")
     @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    Message<?> consumeAndPublish(SolaceInboundMessage<?> p) {
-        Log.infof("Received message: %s", new String(p.getMessage().getPayloadAsBytes(), StandardCharsets.UTF_8));
-        SolaceOutboundMetadata outboundMetadata = SolaceOutboundMetadata.builder()
-                .createPubSubOutboundMetadata();
-        Message<?> outboundMessage = Message.of(p.getPayload(), Metadata.of(outboundMetadata), () -> {
-            CompletableFuture completableFuture = new CompletableFuture();
-            p.ack();
-            completableFuture.complete(null);
-            return completableFuture;
-        }, (throwable) -> {
-            CompletableFuture completableFuture = new CompletableFuture();
-            p.nack(throwable, p.getMetadata());
-            completableFuture.complete(null);
-            return completableFuture;
-        });
-        return outboundMessage;
+    CompletionStage<Void> consumeMessage(SolaceInboundMessage<?> p) {
+        Log.infof("Received message: %s from topic: %s", new String(p.getMessage().getPayloadAsBytes(), StandardCharsets.UTF_8),
+                p.getMessage().getDestinationName());
+        return p.ack();
     }
 
     /**
-     * Publish a simple string from using TryMe in Solace broker and you should see the message published to dynamic destination
-     * topic
+     * Receives message from queue - queue.dynamic.topic and overwrites the topic configured in outgoing channel
+     * dynamic-destination-out
+     *
+     * See [resources/application.properties#mp.messaging.outgoing.dynamic-destination-out.producer.topic]
      *
      * @param p
      */
     @Incoming("dynamic-destination-in")
     @Outgoing("dynamic-destination-out")
-    @Acknowledgment(Acknowledgment.Strategy.MANUAL)
     Message<?> consumeAndPublishToDynamicTopic(SolaceInboundMessage<?> p) {
-        Log.infof("Received message: %s", new String(p.getMessage().getPayloadAsBytes(), StandardCharsets.UTF_8));
+        Log.infof("Received message: %s from topic: %s", new String(p.getMessage().getPayloadAsBytes(), StandardCharsets.UTF_8),
+                p.getMessage().getDestinationName());
         SolaceOutboundMetadata outboundMetadata = SolaceOutboundMetadata.builder()
                 .setApplicationMessageId("test")
-                .setDynamicDestination("solace/quarkus/producer/" + p.getMessage().getCorrelationId()) // make sure correlationID is available on incoming message
+                .setDynamicDestination("hello/foobar/" + p.getMessage().getApplicationMessageId())
                 .createPubSubOutboundMetadata();
-        Message<?> outboundMessage = Message.of(p.getPayload(), Metadata.of(outboundMetadata), () -> {
-            CompletableFuture completableFuture = new CompletableFuture();
-            p.ack();
-            completableFuture.complete(null);
-            return completableFuture;
-        }, (throwable) -> {
-            CompletableFuture completableFuture = new CompletableFuture();
-            p.nack(throwable, p.getMetadata());
-            completableFuture.complete(null);
-            return completableFuture;
-        });
-        return outboundMessage;
+        return p.addMetadata(outboundMetadata);
     }
 
     @Incoming("partition-consumer-1-in")
