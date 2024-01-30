@@ -17,7 +17,7 @@
         </dependency>
         <dependency>
             <groupId>com.solace.quarkus</groupId>
-            <artifactId>quarkus-solace</artifactId>
+            <artifactId>quarkus-solace-client</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

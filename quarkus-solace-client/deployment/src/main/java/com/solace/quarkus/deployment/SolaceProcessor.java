@@ -32,7 +32,7 @@ import io.quarkus.smallrye.health.deployment.spi.HealthBuildItem;
 
 class SolaceProcessor {
 
-    private static final String FEATURE = "solace";
+    private static final String FEATURE = "solace-client";
 
     private static final ParameterizedType SOLACE_CUSTOMIZER_INJECTION_TYPE = ParameterizedType.create(
             DotName.createSimple(Instance.class),
