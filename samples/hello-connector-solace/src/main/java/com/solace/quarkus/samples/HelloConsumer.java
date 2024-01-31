@@ -8,6 +8,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.reactive.messaging.*;
 
 import com.solace.quarkus.messaging.incoming.SolaceInboundMessage;
+import com.solace.quarkus.messaging.incoming.SolaceInboundMetadata;
 import com.solace.quarkus.messaging.outgoing.SolaceOutboundMetadata;
 
 import io.quarkus.logging.Log;
@@ -19,14 +20,18 @@ public class HelloConsumer {
     /**
      * Publishes message to topic hello/foobar which is subscribed by queue.foobar
      *
-     * @see #consumeMessage(SolaceInboundMessage)
+     * @see #consumeInboundMessage(SolaceInboundMessage)
+     * @see #consumePayload(String)
+     * @see #consumeMessage(Message)
      * @return
      */
     @Outgoing("hello-out")
     Multi<Message<String>> publishMessage() {
-        SolaceOutboundMetadata outboundMetadata = SolaceOutboundMetadata.builder()
-                .setApplicationMessageId("1").createPubSubOutboundMetadata();
-        return Multi.createFrom().items("1").map(m -> Message.of(m, Metadata.of(outboundMetadata)));
+        return Multi.createFrom().items("1", "2", "3", "4").map(m -> {
+            SolaceOutboundMetadata outboundMetadata = SolaceOutboundMetadata.builder()
+                    .setApplicationMessageId(m).createPubSubOutboundMetadata();
+            return Message.of(m, Metadata.of(outboundMetadata));
+        });
     }
 
     /**
@@ -35,10 +40,31 @@ public class HelloConsumer {
      * @param p
      */
     @Incoming("hello-in")
-    @Acknowledgment(Acknowledgment.Strategy.MANUAL)
-    CompletionStage<Void> consumeMessage(SolaceInboundMessage<?> p) {
-        Log.infof("Received message: %s from topic: %s", new String(p.getMessage().getPayloadAsBytes(), StandardCharsets.UTF_8),
+    CompletionStage<Void> consumeInboundMessage(SolaceInboundMessage<String> p) {
+        Log.infof("Received message: %s from topic: %s", p.getPayload(),
                 p.getMessage().getDestinationName());
+        return p.ack();
+    }
+
+    /**
+     * Receives message from queue - queue.foobar
+     *
+     * @param p
+     */
+    @Incoming("hello-plain-message-in")
+    void consumePayload(String p) {
+        Log.infof("Received message: %s", p);
+    }
+
+    /**
+     * Receives message from queue - queue.foobar
+     *
+     * @param p
+     */
+    @Incoming("hello-reactive-message-in")
+    CompletionStage<Void> consumeMessage(Message<String> p) {
+        Log.infof("Received message: %s from topic: %s", p.getPayload(),
+                p.getMetadata(SolaceInboundMetadata.class).get().getDestinationName());
         return p.ack();
     }
 
