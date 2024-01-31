@@ -54,14 +54,14 @@ public class SolaceOutgoingChannel
         this.channel = oc.getChannel();
         PersistentMessagePublisherBuilder builder = solace.createPersistentMessagePublisherBuilder();
         switch (oc.getProducerBackPressureStrategy()) {
-            case "elastic":
-                builder.onBackPressureElastic();
+            case "wait":
+                builder.onBackPressureWait(oc.getProducerBackPressureBufferCapacity());
                 break;
             case "reject":
                 builder.onBackPressureReject(oc.getProducerBackPressureBufferCapacity());
                 break;
             default:
-                builder.onBackPressureWait(oc.getProducerBackPressureBufferCapacity());
+                builder.onBackPressureElastic();
                 break;
         }
         this.gracefulShutdown = oc.getClientGracefulShutdown();

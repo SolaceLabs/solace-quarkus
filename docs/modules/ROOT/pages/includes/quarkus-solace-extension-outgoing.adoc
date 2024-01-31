@@ -111,7 +111,7 @@ Supported strategies `reject`, `elastic`, `wait`. Refer to `https://docs.solace.
 // Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_SERVICE_NAME+++`
 // endif::add-copy-button-to-env-var[]
 --|string
-|`wait`
+|`elastic`
 
 
 a| [[quarkus-solace_quarkus.producer.back-pressure.buffer-capacity]]`link:#quarkus-solace_quarkus.producer.back-pressure.buffer-capacity[producer.back-pressure.buffer-capacity]`

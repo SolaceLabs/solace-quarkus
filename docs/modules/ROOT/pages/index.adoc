@@ -219,7 +219,7 @@ public class TemperaturesConsumer {
 [[failure-strategies]]
 == Failure Strategies
 
-If a message is nacked, a failure strategy is applied. Refer to `consumer.queue.failure-strategy` in <<extension-incoming-configuration-reference>>. The default strategy is set to `ignore` and move on to next message. Following are the strategies supported by Quarkus Solace Messaging Connector extension.
+If a message is nacked, a failure strategy is applied. Refer to <<extension-incoming-configuration-reference>><<quarkus-solace_quarkus.consumer.queue.failure-strategy>>. The default strategy is set to `ignore` and move on to next message. Following are the strategies supported by Quarkus Solace Messaging Connector extension.
 
 `ignore` - Mark the message as IGNORED, will continue processing with next message. It TTL and DMQ are configured on the queue message will be moved to DMQ once TTL is reached. If no DMQ is configured but TTL is set message will be lost.
 
@@ -335,6 +335,18 @@ public class PublisherResource {
     }
 }
 ----
+
+== Producer Back-Pressure strategies
+
+Quarkus Solace Messaging connector provides three different strategies to handle back-pressure when publishing messages
+
+{empty}1.Reject - Publisher will start rejecting messages once specified limit is reached
+
+{empty}2.Wait - Publisher is throttled when a specified limit is reached
+
+{empty}3.Elastic - Use an unlimited internal buffer (default)
+
+Refer to <<extension-outgoing-configuration-reference>><<quarkus-solace_quarkus.producer.back-pressure.strategy>> and <<extension-outgoing-configuration-reference>><<quarkus-solace_quarkus.producer.back-pressure.buffer-capacity>> on how to configure back-pressure for producer.
 
 [[processing-messages]]
 == Processing Messages
