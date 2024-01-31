@@ -316,6 +316,8 @@ Quarkus Solace Messaging connector provides three different strategies to handle
 
 {empty}3.Elastic - Use an unlimited internal buffer (default)
 
+CAUTION: In the current version we don't recommend to use back-pressure strategy `Reject` as it is in evolving phase.
+
 Refer to <<extension-outgoing-configuration-reference>><<quarkus-solace_quarkus.producer.back-pressure.strategy>> and <<extension-outgoing-configuration-reference>><<quarkus-solace_quarkus.producer.back-pressure.buffer-capacity>> on how to configure back-pressure for producer.
 
 [[processing-messages]]
