@@ -87,8 +87,8 @@ quarkus.solace.vpn=default
 quarkus.solace.authentication.basic.username=basic
 quarkus.solace.authentication.basic.password=basic
 
-mp.messaging.incoming.in.connector=quarkus-solace
-mp.messaging.incoming.in.consumer.queue.name=temperatures
+mp.messaging.incoming.temperatures.connector=quarkus-solace
+mp.messaging.incoming.temperatures.consumer.queue.name=temperatures
 ----
 
 The extension also supports provisioning queues and subscriptions on broker given that the user has role access to create queues with subscriptions. Configuration is as follows
@@ -374,6 +374,11 @@ The startup check verifies that the communication with Solace Broker is establis
 The liveness check captures any unrecoverable failure happening during the communication with Solace.
 
 The readiness check verifies that the Quarkus Solace Messaging Connector is ready to consume/produce messages to the configured Solace queues/topics.
+
+[[dev-services]]
+Dev Services
+
+Solace Dev Services for Quarkus will spin up latest version of Solace PubSub standard with label `solace` when running tests or in dev mode. Solace Dev Services are enabled by default and will check for any existing containers with same label to reuse. If none is present a new container is started.
 
 [[metrics]]
 == Metrics
