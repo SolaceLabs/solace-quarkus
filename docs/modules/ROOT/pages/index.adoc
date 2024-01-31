@@ -175,7 +175,7 @@ By default, acknowledgement strategy is set to client acknowledgement. This give
 @ApplicationScoped
 public class TemperaturesConsumer {
     @Incoming("temperatures")
-    public CompletionStage<Void> consume(Message<Double> msg) {
+    public CompletionStage<Void> consume(SolaceInboundMessage<Double> msg) {
         // access record metadata
         SolaceInboundMetadata metadata = msg.getMetadata(SolaceInboundMetadata.class).orElseThrow();
         // process the message payload.
