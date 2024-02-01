@@ -244,6 +244,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
 
     @Override
     public void onStateChange(ReceiverState receiverState, ReceiverState receiverState1, long l) {
-
+        SolaceLogging.log.infof("Consumer state changed from %s to %s on channel %s", receiverState.name(),
+                receiverState1.name(), channel);
     }
 }

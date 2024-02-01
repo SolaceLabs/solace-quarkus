@@ -36,7 +36,7 @@ import io.vertx.mutiny.core.Vertx;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class SolaceConsumerTest extends WeldTestBase {
-    private org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getLogger("com.solace.quarkus");
+    private org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getLogger("com.solace.quarkus.messaging");
     private SolaceTestAppender solaceTestAppender = new SolaceTestAppender();
 
     private SolaceConsumerTest() {
