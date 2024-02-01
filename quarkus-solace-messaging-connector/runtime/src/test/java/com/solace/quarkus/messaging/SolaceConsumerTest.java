@@ -4,8 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.*;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import com.solace.messaging.config.SolaceConstants;
 import com.solace.messaging.config.SolaceProperties;
 import com.solace.messaging.publisher.OutboundMessage;
 import com.solace.messaging.publisher.OutboundMessageBuilder;
@@ -36,7 +36,7 @@ import io.vertx.mutiny.core.Vertx;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class SolaceConsumerTest extends WeldTestBase {
-    private org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getLogger("com.solace.quarkus");
+    private org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getLogger("com.solace.quarkus.messaging");
     private SolaceTestAppender solaceTestAppender = new SolaceTestAppender();
 
     private SolaceConsumerTest() {
@@ -192,6 +192,75 @@ public class SolaceConsumerTest extends WeldTestBase {
 
     @Test
     @Order(6)
+    void partitionedQueue() {
+        MapBasedConfig config = new MapBasedConfig()
+                .with("mp.messaging.incoming.consumer-1.connector", "quarkus-solace")
+                .with("mp.messaging.incoming.consumer-1.consumer.queue.name",
+                        SolaceContainer.INTEGRATION_TEST_PARTITION_QUEUE_NAME)
+                .with("mp.messaging.incoming.consumer-1.consumer.queue.type", "durable-non-exclusive")
+                .with("mp.messaging.incoming.consumer-2.connector", "quarkus-solace")
+                .with("mp.messaging.incoming.consumer-2.consumer.queue.name",
+                        SolaceContainer.INTEGRATION_TEST_PARTITION_QUEUE_NAME)
+                .with("mp.messaging.incoming.consumer-2.consumer.queue.type", "durable-non-exclusive")
+                .with("mp.messaging.incoming.consumer-3.connector", "quarkus-solace")
+                .with("mp.messaging.incoming.consumer-3.consumer.queue.name",
+                        SolaceContainer.INTEGRATION_TEST_PARTITION_QUEUE_NAME)
+                .with("mp.messaging.incoming.consumer-3.consumer.queue.type", "durable-non-exclusive")
+                .with("mp.messaging.incoming.consumer-4.connector", "quarkus-solace")
+                .with("mp.messaging.incoming.consumer-4.consumer.queue.name",
+                        SolaceContainer.INTEGRATION_TEST_PARTITION_QUEUE_NAME)
+                .with("mp.messaging.incoming.consumer-4.consumer.queue.type", "durable-non-exclusive");
+
+        // Run app that consumes messages
+        MyPartitionedQueueConsumer app = runApplication(config, MyPartitionedQueueConsumer.class);
+
+        CopyOnWriteArrayList<String> partitionKeys = new CopyOnWriteArrayList<>() {
+            {
+                add("Group-1");
+                add("Group-2");
+                add("Group-3");
+                add("Group-4");
+            }
+        };
+        Map<String, Integer> partitionMessages = new HashMap<>() {
+            {
+                put(partitionKeys.get(0), 0);
+                put(partitionKeys.get(1), 0);
+                put(partitionKeys.get(2), 0);
+                put(partitionKeys.get(3), 0);
+            }
+        };
+
+        Random random = new Random();
+        // Produce messages
+        PersistentMessagePublisher publisher = messagingService.createPersistentMessagePublisherBuilder()
+                .build()
+                .start();
+        Topic tp = Topic.of(SolaceContainer.INTEGRATION_TEST_PARTITION_QUEUE_SUBSCRIPTION);
+        for (int i = 0; i < 1000; i++) {
+            int partitionIndex = random.nextInt(4);
+            String partitionKey = partitionKeys.get(partitionIndex);
+            int count = partitionMessages.get(partitionKey);
+            partitionMessages.put(partitionKey, (count + 1));
+            OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
+            messageBuilder.withProperty(SolaceConstants.MessageUserPropertyConstants.QUEUE_PARTITION_KEY, partitionKey);
+            OutboundMessage outboundMessage = messageBuilder.build(Integer.toString(i));
+            publisher.publish(outboundMessage, tp);
+        }
+
+        // Assert on published and consumed messages
+        await().untilAsserted(() -> assertThat(app.getPartitionMessages().get(partitionKeys.get(0)))
+                .isEqualTo(partitionMessages.get(partitionKeys.get(0))));
+        await().untilAsserted(() -> assertThat(app.getPartitionMessages().get(partitionKeys.get(1)))
+                .isEqualTo(partitionMessages.get(partitionKeys.get(1))));
+        await().untilAsserted(() -> assertThat(app.getPartitionMessages().get(partitionKeys.get(2)))
+                .isEqualTo(partitionMessages.get(partitionKeys.get(2))));
+        await().untilAsserted(() -> assertThat(app.getPartitionMessages().get(partitionKeys.get(3)))
+                .isEqualTo(partitionMessages.get(partitionKeys.get(3))));
+    }
+
+    @Test
+    @Order(7)
     void consumerPublishToErrorTopicPermissionException() {
         MapBasedConfig config = new MapBasedConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
@@ -224,7 +293,7 @@ public class SolaceConsumerTest extends WeldTestBase {
     }
 
     @Test
-    @Order(7)
+    @Order(8)
     void consumerGracefulCloseTest() {
         MapBasedConfig config = new MapBasedConfig()
                 .with("channel-name", "in")
@@ -269,7 +338,7 @@ public class SolaceConsumerTest extends WeldTestBase {
     }
 
     @Test
-    @Order(8)
+    @Order(9)
     void consumerCreateMissingResourceAddSubscriptionPermissionException() {
         MapBasedConfig config = new MapBasedConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
@@ -351,6 +420,53 @@ public class SolaceConsumerTest extends WeldTestBase {
 
         public List<String> getReceivedFailedMessages() {
             return receivedFailedMessages;
+        }
+    }
+
+    @ApplicationScoped
+    static class MyPartitionedQueueConsumer {
+        Map<String, Integer> partitionMessages = new HashMap<>() {
+            {
+                put("Group-1", 0);
+                put("Group-2", 0);
+                put("Group-3", 0);
+                put("Group-4", 0);
+            }
+        };
+
+        @Incoming("consumer-1")
+        CompletionStage<Void> consumer1(SolaceInboundMessage<?> msg) {
+            updatePartitionMessages(msg);
+            return msg.ack();
+        }
+
+        @Incoming("consumer-2")
+        CompletionStage<Void> consumer2(SolaceInboundMessage<?> msg) {
+            updatePartitionMessages(msg);
+            return msg.ack();
+        }
+
+        @Incoming("consumer-3")
+        CompletionStage<Void> consumer3(SolaceInboundMessage<?> msg) {
+            updatePartitionMessages(msg);
+            return msg.ack();
+        }
+
+        @Incoming("consumer-4")
+        CompletionStage<Void> consumer4(SolaceInboundMessage<?> msg) {
+            updatePartitionMessages(msg);
+            return msg.ack();
+        }
+
+        private void updatePartitionMessages(SolaceInboundMessage<?> msg) {
+            String partitionKey = msg.getMessage()
+                    .getProperty(SolaceConstants.MessageUserPropertyConstants.QUEUE_PARTITION_KEY);
+            int count = partitionMessages.get(partitionKey);
+            partitionMessages.put(partitionKey, (count + 1));
+        }
+
+        public Map<String, Integer> getPartitionMessages() {
+            return partitionMessages;
         }
     }
 }

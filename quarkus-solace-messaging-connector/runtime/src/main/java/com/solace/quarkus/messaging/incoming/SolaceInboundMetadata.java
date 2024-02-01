@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Map;
 
 import com.solace.messaging.PubSubPlusClientException;
+import com.solace.messaging.config.SolaceConstants;
 import com.solace.messaging.receiver.InboundMessage;
 import com.solace.messaging.util.Converter;
 import com.solace.messaging.util.InteroperabilitySupport;
@@ -127,6 +128,10 @@ public class SolaceInboundMetadata {
 
     public Map<String, String> getProperties() {
         return msg.getProperties();
+    }
+
+    public String getPartitionKey() {
+        return msg.getProperties().get(SolaceConstants.MessageUserPropertyConstants.QUEUE_PARTITION_KEY);
     }
 
 }

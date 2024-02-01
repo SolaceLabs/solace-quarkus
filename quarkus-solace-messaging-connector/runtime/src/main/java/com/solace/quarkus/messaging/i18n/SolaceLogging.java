@@ -11,7 +11,7 @@ import org.jboss.logging.annotations.*;
 @MessageLogger(projectCode = "SRMSG", length = 5)
 public interface SolaceLogging extends BasicLogger {
 
-    SolaceLogging log = Logger.getMessageLogger(SolaceLogging.class, "com.solace.quarkus");
+    SolaceLogging log = Logger.getMessageLogger(SolaceLogging.class, "com.solace.quarkus.messaging");
 
     @Once
     @LogMessage(level = Logger.Level.INFO)

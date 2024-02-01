@@ -22,7 +22,6 @@ import com.solace.messaging.config.MessageAcknowledgementConfiguration.Outcome;
 import com.solace.messaging.config.MissingResourcesCreationConfiguration.MissingResourcesCreationStrategy;
 import com.solace.messaging.config.ReceiverActivationPassivationConfiguration;
 import com.solace.messaging.config.ReplayStrategy;
-import com.solace.messaging.receiver.DirectMessageReceiver;
 import com.solace.messaging.receiver.InboundMessage;
 import com.solace.messaging.receiver.PersistentMessageReceiver;
 import com.solace.messaging.resources.Queue;
@@ -63,7 +62,6 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
         this.context = Context.newInstance(((VertxInternal) vertx.getDelegate()).createEventLoopContext());
         this.gracefulShutdown = ic.getClientGracefulShutdown();
         this.gracefulShutdownWaitTimeout = ic.getClientGracefulShutdownWaitTimeout();
-        DirectMessageReceiver r = solace.createDirectMessageReceiverBuilder().build();
         Outcome[] outcomes = new Outcome[] { Outcome.ACCEPTED };
         if (ic.getConsumerQueueSupportsNacks()) {
             outcomes = new Outcome[] { Outcome.ACCEPTED, Outcome.FAILED, Outcome.REJECTED };
@@ -193,13 +191,13 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     public void waitForUnAcknowledgedMessages() {
         try {
             receiver.pause();
-            SolaceLogging.log.info("Waiting for incoming channel messages to be acknowledged");
+            SolaceLogging.log.infof("Waiting for incoming channel %s messages to be acknowledged", channel);
             if (!unacknowledgedMessageTracker.awaitEmpty(this.gracefulShutdownWaitTimeout, TimeUnit.MILLISECONDS)) {
-                SolaceLogging.log.info(String.format("Timed out while waiting for the" +
-                        " remaining messages to be acknowledged."));
+                SolaceLogging.log.infof("Timed out while waiting for the" +
+                        " remaining messages to be acknowledged on channel %s.", channel);
             }
         } catch (InterruptedException e) {
-            SolaceLogging.log.info(String.format("Interrupted while waiting for messages to get acknowledged"));
+            SolaceLogging.log.infof("Interrupted while waiting for messages on channel %s to get acknowledged", channel);
             throw new RuntimeException(e);
         }
     }
@@ -246,6 +244,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
 
     @Override
     public void onStateChange(ReceiverState receiverState, ReceiverState receiverState1, long l) {
-
+        SolaceLogging.log.infof("Consumer state changed from %s to %s on channel %s", receiverState.name(),
+                receiverState1.name(), channel);
     }
 }
