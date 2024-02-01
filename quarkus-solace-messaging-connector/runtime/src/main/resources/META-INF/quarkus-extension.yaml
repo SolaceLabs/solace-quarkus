@@ -1,0 +1,17 @@
+artifact: ${project.groupId}:${project.artifactId}:${project.version}
+name: Solace Messaging Connector
+description: Solace Quarkus Messaging Connector Extension for integrating with Solace PubSub+ message brokers with Reactive Messaging.
+metadata:
+  keywords:
+    - "solace"
+    - "pubsubplus event broker"
+    - event driven integration
+    - reactive-solace
+#  guide: https://quarkiverse.github.io/quarkiverse-docs/solace/dev/ # To create and publish this guide, see https://github.com/quarkiverse/quarkiverse/wiki#documenting-your-extension
+  categories:
+    - "messaging"
+  status: "preview"
+  config:
+    - "mp.messaging."
+    - "quarkus.reactive-messaging."
+    - "quarkus.solace"

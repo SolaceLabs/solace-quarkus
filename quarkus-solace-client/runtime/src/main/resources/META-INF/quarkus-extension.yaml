@@ -1,3 +1,4 @@
+artifact: ${project.groupId}:${project.artifactId}:${project.version}
 name: Solace
 description: Solace Quarkus Extension for integrating with Solace PubSub+ message brokers. The extension provides the ability to publish or consume events from event mesh.
 metadata:

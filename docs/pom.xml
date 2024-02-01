@@ -17,7 +17,12 @@
         <!-- Make sure the doc is built after the other artifacts -->
         <dependency>
             <groupId>com.solace.quarkus</groupId>
-            <artifactId>quarkus-solace-deployment</artifactId>
+            <artifactId>quarkus-solace-client-deployment</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.solace.quarkus</groupId>
+            <artifactId>quarkus-solace-messaging-connector-deployment</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

@@ -4,11 +4,11 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.solace.quarkus</groupId>
-    <artifactId>quarkus-solace-parent</artifactId>
+    <artifactId>quarkus-solace-client-parent</artifactId>
     <version>999-SNAPSHOT</version>
   </parent>
-  <artifactId>quarkus-solace</artifactId>
-  <name>Quarkus Solace - Runtime</name>
+  <artifactId>quarkus-solace-client</artifactId>
+  <name>Quarkus Solace Client - Runtime</name>
   <dependencies>
     <dependency>
       <groupId>io.quarkus</groupId>
