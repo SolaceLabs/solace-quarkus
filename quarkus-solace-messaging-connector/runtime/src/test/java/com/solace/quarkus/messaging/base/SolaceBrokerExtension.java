@@ -47,7 +47,7 @@ public class SolaceBrokerExtension implements BeforeAllCallback, ParameterResolv
                 .withExposedPorts(SolaceContainer.Service.SMF.getPort())
                 .withPublishTopic("quarkus/integration/test/replay/messages", SolaceContainer.Service.SMF)
                 .withPublishTopic("quarkus/integration/test/default/>", SolaceContainer.Service.SMF)
-                .withPublishTopic("quarkus/integration/test/provisioned/queue/>", SolaceContainer.Service.SMF)
+                .withPublishTopic("quarkus/integration/test/provisioned/>", SolaceContainer.Service.SMF)
                 .withPublishTopic("quarkus/integration/test/dynamic/>", SolaceContainer.Service.SMF);
         solace.start();
         LOGGER.info("Solace broker started: " + solace.getOrigin(SolaceContainer.Service.SMF));

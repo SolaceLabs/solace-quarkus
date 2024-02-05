@@ -1,13 +1,10 @@
 package com.solace.quarkus.samples;
 
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.CompletionStage;
-
 import jakarta.enterprise.context.ApplicationScoped;
 
 import org.eclipse.microprofile.reactive.messaging.*;
 
-import com.solace.quarkus.messaging.incoming.SolaceInboundMessage;
+import com.solace.messaging.receiver.InboundMessage;
 import com.solace.quarkus.messaging.incoming.SolaceInboundMetadata;
 import com.solace.quarkus.messaging.outgoing.SolaceOutboundMetadata;
 
@@ -20,9 +17,7 @@ public class HelloConsumer {
     /**
      * Publishes message to topic hello/foobar which is subscribed by queue.foobar
      *
-     * @see #consumeInboundMessage(SolaceInboundMessage)
-     * @see #consumePayload(String)
-     * @see #consumeMessage(Message)
+     * @see #consumeMessage(InboundMessage)
      * @return
      */
     @Outgoing("hello-out")
@@ -40,10 +35,8 @@ public class HelloConsumer {
      * @param p
      */
     @Incoming("hello-in")
-    CompletionStage<Void> consumeInboundMessage(SolaceInboundMessage<String> p) {
-        Log.infof("Received message: %s from topic: %s", p.getPayload(),
-                p.getMessage().getDestinationName());
-        return p.ack();
+    void consumeMessage(InboundMessage p) {
+        Log.infof("Received message: %s from topic: %s", p.getPayloadAsString(), p.getDestinationName());
     }
 
     /**
@@ -78,12 +71,12 @@ public class HelloConsumer {
      */
     @Incoming("dynamic-destination-in")
     @Outgoing("dynamic-destination-out")
-    Message<?> consumeAndPublishToDynamicTopic(SolaceInboundMessage<?> p) {
-        Log.infof("Received message: %s from topic: %s", new String(p.getMessage().getPayloadAsBytes(), StandardCharsets.UTF_8),
-                p.getMessage().getDestinationName());
+    Message<?> consumeAndPublishToDynamicTopic(Message<?> p) {
+        SolaceInboundMetadata metadata = p.getMetadata(SolaceInboundMetadata.class).get();
+        Log.infof("Received message: %s from topic: %s", metadata.getPayloadAsString(), metadata.getDestinationName());
         SolaceOutboundMetadata outboundMetadata = SolaceOutboundMetadata.builder()
                 .setApplicationMessageId("test")
-                .setDynamicDestination("hello/foobar/" + p.getMessage().getApplicationMessageId())
+                .setDynamicDestination("hello/foobar/" + metadata.getApplicationMessageId())
                 .createPubSubOutboundMetadata();
         return p.addMetadata(outboundMetadata);
     }
