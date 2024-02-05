@@ -1,5 +1,7 @@
 package com.solace.quarkus.samples;
 
+import java.util.concurrent.CompletionStage;
+
 import jakarta.enterprise.context.ApplicationScoped;
 
 import org.eclipse.microprofile.reactive.messaging.*;

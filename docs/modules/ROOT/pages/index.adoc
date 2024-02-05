@@ -123,7 +123,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class TemperaturesConsumer {
     @Incoming("temperatures")
-    public void consume(Double temperature) {
+    public void consume(byte[] temperature) {
         // process.
     }
 }
@@ -135,11 +135,11 @@ __Message__
 @ApplicationScoped
 public class TemperaturesConsumer {
     @Incoming("temperatures")
-    public CompletionStage<Void> consume(Message<Double> msg) {
+    public CompletionStage<Void> consume(Message<byte[]> msg) {
         // access record metadata
         SolaceInboundMetadata metadata = msg.getMetadata(SolaceInboundMetadata.class).orElseThrow();
         // process the message payload.
-        Double temperature = msg.getPayload();
+        double temperature = ByteBuffer.wrap(msg.getPayload()).getDouble();
         // Acknowledge the incoming message
         return msg.ack();
     }
@@ -147,20 +147,15 @@ public class TemperaturesConsumer {
 ----
 
 __SolaceInboundMessage__ This is a wrapper to incoming Inbound Message from Solace Messaging API
+
 [source,java]
 ----
-@ApplicationScoped
+import com.solace.messaging.receiver.InboundMessage;@ApplicationScoped
 public class TemperaturesConsumer {
     @Incoming("temperatures")
-    public void consume(SolaceInboundMessage<Double> solaceInboundMessage) {
-        // get actual inbound message
-        InboundMessage inboundMessage = solaceInboundMessage.getMessage();
+    public void consume(InboundMessage inboundMessage) {
         // process the message payload.
-        Double temperature = solaceInboundMessage.getPayload();
-        // access record metadata
-        SolaceInboundMetadata metadata = solaceInboundMessage.getMetadata();
-        // ...
-        solaceInboundMessage.ack();
+        String temperature = inboundMessage.getPayloadAsString();
     }
 }
 ----
@@ -175,11 +170,11 @@ By default, acknowledgement strategy is set to client acknowledgement. This give
 @ApplicationScoped
 public class TemperaturesConsumer {
     @Incoming("temperatures")
-    public CompletionStage<Void> consume(SolaceInboundMessage<Double> msg) {
+    public CompletionStage<Void> consume(Message<byte[]> msg) {
         // access record metadata
         SolaceInboundMetadata metadata = msg.getMetadata(SolaceInboundMetadata.class).orElseThrow();
         // process the message payload.
-        Double temperature = msg.getPayload();
+        double temperature = ByteBuffer.wrap(msg.getPayload()).getDouble();
         // Acknowledge the incoming message
         return msg.ack();
     }
@@ -296,12 +291,12 @@ Sending messages with __@Emitter__
 public class PublisherResource {
 
     @Channel("temperatures-out")
-    MutinyEmitter<Double> temperatureEmitter;
+    MutinyEmitter<Temperature> temperatureEmitter;
 
     @POST
     @Path("/publish")
-    public Uni<Void> publish(Double temperature) {
-        return temperatureEmitter.send(person);
+    public Uni<Void> publish(Temperature temperature) {
+        return temperatureEmitter.send(temperature);
     }
 }
 ----
@@ -337,8 +332,8 @@ public class TemperaturesProcessor {
 
     @Incoming("temperatures-in")
     @Outgoing("temperatures-out")
-    public double process(double temperature) {
-        return (temperature - 32) * 5 / 9;
+    public double process(byte[] temperature) {
+        return (ByteBuffer.wrap(temperature).getDouble() - 32) * 5 / 9;
     }
 
 }
