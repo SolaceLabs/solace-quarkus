@@ -119,18 +119,19 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
                                 .call(() -> Uni.createFrom().completionStage(receiver.startAsync()))
                         : m)
                 .onItem().invoke(() -> alive.set(true))
-                .onFailure().retry().withBackOff(Duration.ofSeconds(1)).atMost(3).onFailure().invoke((t) -> {
-                    failures.add(t);
-                    alive.set(false);
-                });
+                .onFailure().retry().withBackOff(Duration.ofSeconds(1)).atMost(3).onFailure().invoke(this::reportFailure);
         if (!lazyStart) {
             receiver.start();
         }
     }
 
-    private void reportFailure(Throwable throwable) {
-        failures.add(throwable);
+    private synchronized void reportFailure(Throwable throwable) {
         alive.set(false);
+        // Don't keep all the failures, there are only there for reporting.
+        if (failures.size() == 10) {
+            failures.remove(0);
+        }
+        failures.add(throwable);
     }
 
     private SolaceFailureHandler createFailureHandler(SolaceConnectorIncomingConfiguration ic, MessagingService solace) {
@@ -208,12 +209,16 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
         }
         closed.compareAndSet(false, true);
         if (this.pollerThread != null) {
-            this.pollerThread.shutdown();
-            try {
-                this.pollerThread.awaitTermination(3000, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                SolaceLogging.log.shutdownException(e.getMessage());
-                throw new RuntimeException(e);
+            if (this.gracefulShutdown) {
+                this.pollerThread.shutdown();
+                try {
+                    this.pollerThread.awaitTermination(3000, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    SolaceLogging.log.shutdownException(e.getMessage());
+                    throw new RuntimeException(e);
+                }
+            } else {
+                this.pollerThread.shutdownNow();
             }
         }
         receiver.terminate(3000);
@@ -233,10 +238,8 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
             synchronized (this) {
                 reportedFailures = new ArrayList<>(failures);
             }
-
             builder.add(channel, solace.isConnected() && alive.get(),
                     reportedFailures.stream().map(Throwable::getMessage).collect(Collectors.joining()));
-            failures.removeAll(reportedFailures);
         } else {
             builder.add(channel, solace.isConnected() && alive.get());
         }

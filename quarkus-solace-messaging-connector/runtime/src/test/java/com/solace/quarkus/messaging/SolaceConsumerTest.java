@@ -46,7 +46,7 @@ public class SolaceConsumerTest extends WeldTestBase {
     @Test
     @Order(1)
     void consumer() {
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
@@ -74,7 +74,7 @@ public class SolaceConsumerTest extends WeldTestBase {
     @Test
     @Order(2)
     void consumerReplay() {
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
@@ -94,7 +94,7 @@ public class SolaceConsumerTest extends WeldTestBase {
     @Test
     @Order(3)
     void consumerWithSelectorQuery() {
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
@@ -124,7 +124,7 @@ public class SolaceConsumerTest extends WeldTestBase {
     @Test
     @Order(4)
     void consumerFailedProcessingPublishToErrorTopic() {
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_QUEUE_NAME)
                 .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
@@ -158,7 +158,7 @@ public class SolaceConsumerTest extends WeldTestBase {
     @Test
     @Order(5)
     void consumerFailedProcessingMoveToDMQ() {
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_QUEUE_NAME)
                 .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
@@ -193,7 +193,7 @@ public class SolaceConsumerTest extends WeldTestBase {
     @Test
     @Order(6)
     void partitionedQueue() {
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.incoming.consumer-1.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.consumer-1.consumer.queue.name",
                         SolaceContainer.INTEGRATION_TEST_PARTITION_QUEUE_NAME)
@@ -262,7 +262,7 @@ public class SolaceConsumerTest extends WeldTestBase {
     @Test
     @Order(7)
     void consumerPublishToErrorTopicPermissionException() {
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_QUEUE_NAME)
                 .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
@@ -340,7 +340,7 @@ public class SolaceConsumerTest extends WeldTestBase {
     @Test
     @Order(9)
     void consumerCreateMissingResourceAddSubscriptionPermissionException() {
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")

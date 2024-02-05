@@ -31,13 +31,12 @@ public class SolaceConsumerPerformanceTest extends WeldTestBase {
                 .build()
                 .start();
 
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
                 .with("mp.messaging.incoming.in.consumer.queue.subscriptions", topic);
-        //                .with("mp.messaging.incoming.in.client.graceful-shutdown", false);
 
         // Run app that consumes messages
         MyConsumer app = runApplication(config, MyConsumer.class);

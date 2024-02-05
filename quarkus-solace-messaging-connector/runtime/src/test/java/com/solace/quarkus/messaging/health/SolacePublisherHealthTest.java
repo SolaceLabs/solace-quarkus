@@ -22,7 +22,7 @@ import io.smallrye.mutiny.Multi;
 import io.smallrye.reactive.messaging.health.HealthReport;
 import io.smallrye.reactive.messaging.test.common.config.MapBasedConfig;
 
-public class SolacePublisherHealthCheck extends WeldTestBase {
+public class SolacePublisherHealthTest extends WeldTestBase {
     @Test
     void publisherHealthCheck() {
         MapBasedConfig config = new MapBasedConfig()
@@ -73,7 +73,9 @@ public class SolacePublisherHealthCheck extends WeldTestBase {
         // Run app that publish messages
         MyApp app = runApplication(config, MyApp.class);
 
-        await().until(() -> isStarted() && isReady());
+        await().until(() -> isStarted() && isReady() && !isAlive());
+
+        await().until(() -> !isAlive());
 
         HealthReport startup = getHealth().getStartup();
         HealthReport liveness = getHealth().getLiveness();
@@ -94,7 +96,6 @@ public class SolacePublisherHealthCheck extends WeldTestBase {
 
         @Outgoing("out")
         Multi<Message<String>> out() {
-
             return Multi.createFrom().items("1", "2", "3", "4", "5")
                     .map(payload -> Message.of(payload).withAck(() -> {
                         acked.add(payload);
