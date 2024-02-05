@@ -139,7 +139,7 @@ public class TemperaturesConsumer {
         // access record metadata
         SolaceInboundMetadata metadata = msg.getMetadata(SolaceInboundMetadata.class).orElseThrow();
         // process the message payload.
-        double temperature = ByteBuffer.wrap(msg.getPayload()).getDouble();
+        double temperature = Double.parseDouble(new String(p.getPayload()));
         // Acknowledge the incoming message
         return msg.ack();
     }
@@ -174,7 +174,7 @@ public class TemperaturesConsumer {
         // access record metadata
         SolaceInboundMetadata metadata = msg.getMetadata(SolaceInboundMetadata.class).orElseThrow();
         // process the message payload.
-        double temperature = ByteBuffer.wrap(msg.getPayload()).getDouble();
+        double temperature = Double.parseDouble(new String(p.getPayload()));
         // Acknowledge the incoming message
         return msg.ack();
     }
@@ -358,7 +358,7 @@ public class TemperaturesProcessor {
     @Incoming("temperatures-in")
     @Outgoing("temperatures-out")
     public double process(byte[] temperature) {
-        return (ByteBuffer.wrap(temperature).getDouble() - 32) * 5 / 9;
+        return (Double.parseDouble(new String(p.getPayload())) - 32) * 5 / 9;
     }
 
 }
