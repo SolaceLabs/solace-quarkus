@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import com.solace.quarkus.messaging.SolaceConnector;
 import com.solace.quarkus.messaging.converters.SolaceMessageConverter;
 
+import io.quarkus.runtime.configuration.QuarkusConfigFactory;
 import io.smallrye.config.SmallRyeConfigProviderResolver;
 import io.smallrye.config.inject.ConfigExtension;
 import io.smallrye.reactive.messaging.providers.MediatorFactory;
@@ -79,6 +80,8 @@ public class WeldTestBase extends SolaceBaseTest {
         }
         // Release the config objects
         SmallRyeConfigProviderResolver.instance().releaseConfig(ConfigProvider.getConfig());
+        QuarkusConfigFactory.setConfig(null);
+        MapBasedConfig.cleanup();
     }
 
     public BeanManager getBeanManager() {
