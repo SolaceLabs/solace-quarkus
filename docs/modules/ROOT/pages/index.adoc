@@ -283,6 +283,31 @@ public class TemperaturesProducer {
 }
 ----
 
+Generating `org.eclipse.microprofile.reactive.messaging.Message` with partition key and publish to Solace.
+
+[source,java]
+----
+@ApplicationScoped
+public class TemperaturesProducer {
+    private final Random random = new Random();
+
+    @Outgoing("temperatures-out")
+    Multi<Message<Double>> publishTemperatures() {
+        return Multi.createFrom().range(0, 1000)
+            .map(i -> {
+                String partitionKey = "Group-1";
+                if(i % 2 == 0) {
+                    partitionKey = "Group-2";
+                }
+                 SolaceOutboundMetadata outboundMetadata = SolaceOutboundMetadata.builder()
+                .setApplicationMessageId(Integer.toString(i))
+                .setPartitionKey(partitionKey).createPubSubOutboundMetadata();
+                 return Message.of(random.nextDouble(), Metadata.of(outboundMetadata));
+            });
+    }
+}
+----
+
 Sending messages with __@Emitter__
 
 [source,java]
