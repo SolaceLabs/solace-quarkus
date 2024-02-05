@@ -142,4 +142,9 @@ public class WeldTestBase extends SolaceBaseTest {
         return getHealth().getLiveness().isOk();
     }
 
+    public MapBasedConfig commonConfig() {
+        return new MapBasedConfig()
+                .with("mp.messaging.connector.quarkus-solace.client.graceful-shutdown", false);
+    }
+
 }

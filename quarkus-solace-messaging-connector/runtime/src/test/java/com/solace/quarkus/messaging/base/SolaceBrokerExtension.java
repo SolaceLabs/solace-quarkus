@@ -44,7 +44,7 @@ public class SolaceBrokerExtension implements BeforeAllCallback, ParameterResolv
     public void startSolaceBroker() {
         solace = createSolaceContainer()
                 .withCredentials("user", "pass")
-                .withExposedPorts(SolaceContainer.Service.SMF.getPort())
+                .withExposedPorts(SolaceContainer.Service.SMF.getPort(), 8080)
                 .withPublishTopic("quarkus/integration/test/replay/messages", SolaceContainer.Service.SMF)
                 .withPublishTopic("quarkus/integration/test/default/>", SolaceContainer.Service.SMF)
                 .withPublishTopic("quarkus/integration/test/provisioned/>", SolaceContainer.Service.SMF)

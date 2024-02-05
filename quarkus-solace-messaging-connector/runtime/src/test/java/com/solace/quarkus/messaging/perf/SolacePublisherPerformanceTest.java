@@ -28,7 +28,7 @@ public class SolacePublisherPerformanceTest extends WeldTestBase {
 
     @Test
     void publisherPerformanceTestWithBackPressureWaitAndWaitForPublishReceipt() {
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.producer.topic", topic);
 
@@ -65,7 +65,7 @@ public class SolacePublisherPerformanceTest extends WeldTestBase {
 
     @Test
     void publisherPerformanceTestWithBackPressureWaitAndNoWaitForPublishReceipt() {
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.producer.topic", topic)
                 .with("mp.messaging.outgoing.out.producer.waitForPublishReceipt", false);
@@ -103,7 +103,7 @@ public class SolacePublisherPerformanceTest extends WeldTestBase {
 
     @Test
     void publisherPerformanceTestWithBackPressureElasticAndWaitForPublishReceipt() {
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.producer.topic", topic)
                 .with("mp.messaging.outgoing.out.producer.back-pressure.strategy", "elastic");
@@ -141,7 +141,7 @@ public class SolacePublisherPerformanceTest extends WeldTestBase {
 
     @Test
     void publisherPerformanceTestWithBackPressureElasticAndNoWaitForPublishReceipt() {
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.producer.topic", topic)
                 .with("mp.messaging.outgoing.out.producer.back-pressure.strategy", "elastic")

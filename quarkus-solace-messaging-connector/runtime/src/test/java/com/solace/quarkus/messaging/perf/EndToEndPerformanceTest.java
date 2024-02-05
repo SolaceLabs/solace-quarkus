@@ -37,7 +37,7 @@ public class EndToEndPerformanceTest extends WeldTestBase {
     @Test
     public void endToEndPerformanceTesttWithBackPressureWaitAndWaitForPublishReceipt() {
         String processedTopic = topic + "/processed";
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")

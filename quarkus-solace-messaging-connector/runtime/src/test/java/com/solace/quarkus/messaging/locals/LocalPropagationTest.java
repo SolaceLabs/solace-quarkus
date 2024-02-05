@@ -39,7 +39,7 @@ import io.vertx.mutiny.core.Vertx;
 public class LocalPropagationTest extends WeldTestBase {
 
     private MapBasedConfig dataconfig() {
-        return new MapBasedConfig()
+        return commonConfig()
                 .with("mp.messaging.incoming.data.connector", SolaceConnector.CONNECTOR_NAME)
                 .with("mp.messaging.incoming.data.consumer.queue.subscriptions", topic)
                 .with("mp.messaging.incoming.data.consumer.queue.add-additional-subscriptions", "true")

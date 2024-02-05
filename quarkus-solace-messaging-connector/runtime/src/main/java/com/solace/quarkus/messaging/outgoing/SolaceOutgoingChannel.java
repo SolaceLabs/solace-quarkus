@@ -76,10 +76,7 @@ public class SolaceOutgoingChannel
         boolean lazyStart = oc.getClientLazyStart();
         this.topic = Topic.of(oc.getProducerTopic().orElse(this.channel));
         this.processor = new SenderProcessor(oc.getProducerMaxInflightMessages(), oc.getProducerWaitForPublishReceipt(),
-                m -> sendMessage(solace, m, oc.getProducerWaitForPublishReceipt()).onFailure().invoke((t) -> {
-                    failures.add(t);
-                    alive.set(false);
-                }));
+                m -> sendMessage(solace, m, oc.getProducerWaitForPublishReceipt()).onFailure().invoke(this::reportFailure));
         this.subscriber = MultiUtils.via(processor, multi -> multi.plug(
                 m -> lazyStart ? m.onSubscription().call(() -> Uni.createFrom().completionStage(publisher.startAsync())) : m));
         if (!lazyStart) {
@@ -106,11 +103,18 @@ public class SolaceOutgoingChannel
                     return Uni.createFrom().completionStage(m.getAck());
                 })
                 .onFailure().recoverWithUni(t -> {
-                    failures.add(t);
-                    alive.set(false);
+                    reportFailure(t);
                     return Uni.createFrom().completionStage(m.nack(t));
                 });
+    }
 
+    private synchronized void reportFailure(Throwable throwable) {
+        alive.set(false);
+        // Don't keep all the failures, there are only there for reporting.
+        if (failures.size() == 10) {
+            failures.remove(0);
+        }
+        failures.add(throwable);
     }
 
     private Uni<PublishReceipt> publishMessage(PersistentMessagePublisher publisher, Message<?> m,
@@ -249,9 +253,9 @@ public class SolaceOutgoingChannel
             synchronized (this) {
                 reportedFailures = new ArrayList<>(failures);
             }
+            System.out.println(reportedFailures);
             builder.add(channel, solace.isConnected() && alive.get(),
                     reportedFailures.stream().map(Throwable::getMessage).collect(Collectors.joining()));
-            failures.removeAll(reportedFailures);
         } else {
             builder.add(channel, solace.isConnected() && alive.get());
         }
