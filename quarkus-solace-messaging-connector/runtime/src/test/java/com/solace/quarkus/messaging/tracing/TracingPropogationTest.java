@@ -10,14 +10,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
-import com.solace.messaging.publisher.OutboundMessage;
-import com.solace.messaging.receiver.InboundMessage;
-import com.solace.messaging.receiver.PersistentMessageReceiver;
-import com.solace.messaging.resources.Queue;
-import com.solace.messaging.resources.TopicSubscription;
-import com.solace.quarkus.messaging.SolaceProcessorTest;
-import com.solace.quarkus.messaging.SolacePublisherTest;
-import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -27,8 +19,13 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.solace.messaging.publisher.OutboundMessage;
 import com.solace.messaging.publisher.PersistentMessagePublisher;
+import com.solace.messaging.receiver.InboundMessage;
+import com.solace.messaging.receiver.PersistentMessageReceiver;
+import com.solace.messaging.resources.Queue;
 import com.solace.messaging.resources.Topic;
+import com.solace.messaging.resources.TopicSubscription;
 import com.solace.quarkus.messaging.base.WeldTestBase;
 import com.solace.quarkus.messaging.incoming.SolaceInboundMetadata;
 
@@ -44,6 +41,7 @@ import io.opentelemetry.sdk.trace.SpanProcessor;
 import io.opentelemetry.sdk.trace.data.SpanData;
 import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
 import io.opentelemetry.sdk.trace.samplers.Sampler;
+import io.smallrye.mutiny.Multi;
 import io.smallrye.reactive.messaging.test.common.config.MapBasedConfig;
 
 public class TracingPropogationTest extends WeldTestBase {
