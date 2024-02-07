@@ -30,7 +30,7 @@ public class SolacePublisherTest extends WeldTestBase {
 
     @Test
     void publisher() {
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.producer.topic", topic);
 
@@ -53,7 +53,7 @@ public class SolacePublisherTest extends WeldTestBase {
 
     @Test
     void publisherWithDynamicDestination() {
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.producer.topic", topic);
 
@@ -80,7 +80,7 @@ public class SolacePublisherTest extends WeldTestBase {
 
     @Test
     void publisherWithBackPressureReject() {
-        MapBasedConfig config = new MapBasedConfig()
+        MapBasedConfig config = commonConfig()
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.producer.topic", topic)
                 .with("mp.messaging.outgoing.out.producer.back-pressure.buffer-capacity", 1);

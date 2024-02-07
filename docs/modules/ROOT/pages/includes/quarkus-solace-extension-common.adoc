@@ -1,6 +1,6 @@
 
 :summaryTableId: quarkus-solace-extension-common
-Common configuration for Solace Quarkus Extension Incoming and Outgoing channels
+Common configuration for Quarkus Solace Messaging Connector Incoming and Outgoing channels
 [.configuration-reference.searchable, cols="80,.^10,.^10"]
 |===
 

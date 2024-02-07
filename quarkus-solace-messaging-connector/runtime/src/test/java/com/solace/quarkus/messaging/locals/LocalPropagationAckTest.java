@@ -28,7 +28,7 @@ import io.smallrye.reactive.messaging.test.common.config.MapBasedConfig;
 public class LocalPropagationAckTest extends WeldTestBase {
 
     private MapBasedConfig dataconfig() {
-        return new MapBasedConfig()
+        return commonConfig()
                 .with("mp.messaging.incoming.data.connector", SolaceConnector.CONNECTOR_NAME)
                 .with("mp.messaging.incoming.data.consumer.queue.subscriptions", topic)
                 .with("mp.messaging.incoming.data.consumer.queue.add-additional-subscriptions", "true")
