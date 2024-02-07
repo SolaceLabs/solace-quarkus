@@ -90,7 +90,7 @@
         <dependency>
             <groupId>io.smallrye.reactive</groupId>
             <artifactId>test-common</artifactId>
-            <version>4.11.0</version>
+            <version>4.16.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
