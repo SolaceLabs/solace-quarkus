@@ -22,6 +22,7 @@ import com.solace.messaging.config.MessageAcknowledgementConfiguration.Outcome;
 import com.solace.messaging.config.MissingResourcesCreationConfiguration.MissingResourcesCreationStrategy;
 import com.solace.messaging.config.ReceiverActivationPassivationConfiguration;
 import com.solace.messaging.config.ReplayStrategy;
+import com.solace.messaging.config.SolaceConstants;
 import com.solace.messaging.receiver.InboundMessage;
 import com.solace.messaging.receiver.PersistentMessageReceiver;
 import com.solace.messaging.resources.Queue;
@@ -29,6 +30,8 @@ import com.solace.messaging.resources.TopicSubscription;
 import com.solace.quarkus.messaging.SolaceConnectorIncomingConfiguration;
 import com.solace.quarkus.messaging.fault.*;
 import com.solace.quarkus.messaging.i18n.SolaceLogging;
+import com.solace.quarkus.messaging.tracing.SolaceOpenTelemetryInstrumenter;
+import com.solace.quarkus.messaging.tracing.SolaceTrace;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
@@ -51,6 +54,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     private final boolean gracefulShutdown;
     private final long gracefulShutdownWaitTimeout;
     private final List<Throwable> failures = new ArrayList<>();
+    private final SolaceOpenTelemetryInstrumenter solaceOpenTelemetryInstrumenter;
     private volatile MessagingService solace;
 
     // Assuming we won't ever exceed the limit of an unsigned long...
@@ -107,19 +111,47 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
 
         // TODO Here use a subscription receiver.receiveAsync with an internal queue
         this.pollerThread = Executors.newSingleThreadExecutor();
-        this.stream = Multi.createBy().repeating()
+
+        Multi<? extends Message<?>> incomingMulti = Multi.createBy().repeating()
                 .uni(() -> Uni.createFrom().item(receiver::receiveMessage)
                         .runSubscriptionOn(pollerThread))
                 .until(__ -> closed.get())
                 .emitOn(context::runOnContext)
                 .map(consumed -> new SolaceInboundMessage<>(consumed, ackHandler, failureHandler,
-                        unacknowledgedMessageTracker, this::reportFailure))
-                .plug(m -> lazyStart
-                        ? m.onSubscription()
-                                .call(() -> Uni.createFrom().completionStage(receiver.startAsync()))
-                        : m)
+                        unacknowledgedMessageTracker, this::reportFailure));
+
+        if (ic.getClientTracingEnabled()) {
+            solaceOpenTelemetryInstrumenter = SolaceOpenTelemetryInstrumenter.createForIncoming();
+            incomingMulti = incomingMulti.map(message -> {
+                InboundMessage consumedMessage = message.getMetadata(SolaceInboundMetadata.class).get().getMessage();
+                SolaceTrace solaceTrace = new SolaceTrace.Builder()
+                        .withDestinationKind("queue")
+                        .withTopic(consumedMessage.getDestinationName())
+                        .withMessageID(consumedMessage.getApplicationMessageId())
+                        .withCorrelationID(consumedMessage.getCorrelationId())
+                        .withPartitionKey(
+                                consumedMessage
+                                        .hasProperty(SolaceConstants.MessageUserPropertyConstants.QUEUE_PARTITION_KEY)
+                                                ? consumedMessage
+                                                        .getProperty(
+                                                                SolaceConstants.MessageUserPropertyConstants.QUEUE_PARTITION_KEY)
+                                                : null)
+                        .withPayloadSize(Long.valueOf(consumedMessage.getPayloadAsBytes().length))
+                        .withProperties(consumedMessage.getProperties())
+                        .build();
+                return solaceOpenTelemetryInstrumenter.traceIncoming(message, solaceTrace, true);
+            });
+        } else {
+            solaceOpenTelemetryInstrumenter = null;
+        }
+
+        this.stream = incomingMulti.plug(m -> lazyStart
+                ? m.onSubscription()
+                        .call(() -> Uni.createFrom().completionStage(receiver.startAsync()))
+                : m)
                 .onItem().invoke(() -> alive.set(true))
                 .onFailure().retry().withBackOff(Duration.ofSeconds(1)).atMost(3).onFailure().invoke(this::reportFailure);
+
         if (!lazyStart) {
             receiver.start();
         }
