@@ -66,6 +66,69 @@ include::includes/quarkus-solace-extension-outgoing.adoc[leveloffset=+1, opts=op
 
 include::includes/quarkus-solace-extension-common.adoc[leveloffset=+1, opts=optional]
 
+[[configuring-quarkus-solace-client]]
+== Configuring Quarkus Solace Client
+
+Solace Broker supports different ways to connect and authenticate users. This section shows how to pass <<quarkus-solace_quarkus.solace-extra, extra properties>> to quarkus solace client in different scenarios.
+
+{empty}1. Connecting to a standalone broker with basic authentication
+[source,yaml]
+----
+quarkus.solace.host=tcp://localhost:55555
+quarkus.solace.vpn=default
+quarkus.solace.authentication.basic.username=test
+quarkus.solace.authentication.basic.password=test
+----
+
+{empty}2. Connecting to a standalone broker with TLS and basic authentication. This assumes you have a publicly signed CA.
+[source,yaml]
+----
+quarkus.solace.host=tcps://localhost:55443
+quarkus.solace.vpn=default
+quarkus.solace.authentication.basic.username=test
+quarkus.solace.authentication.basic.password=test
+----
+
+{empty}3. Connecting to a standalone broker with TLS, basic authentication and custom trust store which hold your CA.
+[source,yaml]
+----
+quarkus.solace.host=tcps://localhost:55443
+quarkus.solace.vpn=default
+quarkus.solace.authentication.basic.username=test
+quarkus.solace.authentication.basic.password=test
+quarkus.solace.tls.trust-store-path=
+quarkus.solace.tls.trust-store-type=
+quarkus.solace.tls.trust-store-password=
+----
+
+{empty}3. Connecting to a standalone broker with TLS, trust store and client certificate authentication. In case of client certificate authentication broker will read from configured username source(ex: Common Name, Subject Alt Name etc...). Refer to https://docs.solace.com/Security/Configuring-Client-Authentication.htm#Client-Cert[Solace Client Certificate Authentication].
+[source,yaml]
+----
+quarkus.solace.host=tcps://localhost:55443
+quarkus.solace.vpn=default
+quarkus.solace.authentication.scheme=AUTHENTICATION_SCHEME_CLIENT_CERTIFICATE
+quarkus.solace.tls.trust-store-path=
+quarkus.solace.tls.trust-store-type=
+quarkus.solace.tls.trust-store-password=
+quarkus.solace.authentication.client-cert.keystore=
+quarkus.solace.authentication.client-cert.keystore-password=
+quarkus.solace.authentication.client-cert.keystore-format=
+----
+
+{empty}4. Connecting to a HA broker. Here you can configure both active and standby URL and the client will switch connectivity based on availability.
+[source,yaml]
+----
+quarkus.solace.host=tcp://active-host-name:55555,tcp://standby-host-name:55555
+quarkus.solace.vpn=default
+quarkus.solace.authentication.basic.username=test
+quarkus.solace.authentication.basic.password=test
+----
+
+In similar way other authentication mechanisms can be enabled
+
+CAUTION: In the current version we don't recommend to use OAuth as it in evolving phase.
+
+
 [[configuring-quarkus-solace-messaging-connector]]
 == Configuring Quarkus Solace Messaging Connector
 
