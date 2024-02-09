@@ -72,6 +72,9 @@ jobs:
                 echo "New version: ${{ steps.version.outputs.version }} going to be released!"
           fi
       
+      - name: Run Testsd
+        run: mvn verify
+      
       - name: Configure Git author
         run: |
           git config --local user.email "action@github.com"
@@ -108,7 +111,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_PASSPHRASE: ${{ secrets.GPG_SECRET }}
         run: |
-          mvn deploy -Dmaven.install.skip=true -DskipTests -Pgithub,publish
+          mvn deploy -Dmaven.install.skip=true -Pgithub,publish
       
       - name: maven-settings-xml-action
         uses: whelk-io/maven-settings-xml-action@v4
@@ -119,7 +122,7 @@ jobs:
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_SECRET }}
         run: |
-          mvn deploy -Dmaven.install.skip=true -DskipTests -Possrh,publish
+          mvn deploy -Dmaven.install.skip=true -Possrh,publish
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
