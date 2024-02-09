@@ -21,6 +21,8 @@ defaults:
 permissions:
   contents: write
   packages: write
+  checks: write
+
 
 jobs:
   release:
