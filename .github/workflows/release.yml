@@ -72,15 +72,6 @@ jobs:
                 echo "New version: ${{ steps.version.outputs.version }} going to be released!"
           fi
       
-      - name: Run Testsd
-        run: mvn verify
-      
-      - name: Configure Git author
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-      
-
       - name: Release Version - Prepare
         run: >-
           mvn -B -U versions:set 
@@ -95,6 +86,30 @@ jobs:
           if ! git diff --quiet docs/modules/ROOT/pages/includes/attributes.adoc; then
             git add docs/modules/ROOT/pages/includes/attributes.adoc
           fi
+      
+      - name: Verify Maven
+        run: mvn verify
+      
+      - name: Publishing Test Results - Unit/Integration Tests Pre-Condition
+        if: always()
+        id: unit_integration_test_report_exists
+        uses: andstor/file-existence-action@v2
+        with:
+          files: "**/target/failsafe-reports/**/TEST*.xml,**/surefire-reports/**/TEST*.xml"
+      
+      - name: Publishing Test Results - Unit/Integration Tests
+        uses: dorny/test-reporter@v1.7.0
+        if: always() && steps.unit_integration_test_report_exists.outputs.files_exists == 'true'
+        with:
+          name: Unit-Integration Tests
+          path: "**/target/failsafe-reports/**/TEST*.xml,**/surefire-reports/**/TEST*.xml"
+          reporter: java-junit
+          only-summary: 'true'
+      
+      - name: Configure Git author
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
 
       - name: Release Version - Checkin
         run: >-
