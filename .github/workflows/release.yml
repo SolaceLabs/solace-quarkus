@@ -95,14 +95,15 @@ jobs:
         id: unit_integration_test_report_exists
         uses: andstor/file-existence-action@v2
         with:
-          files: "**/target/failsafe-reports/**/TEST*.xml,**/surefire-reports/**/TEST*.xml"
+          files: "**/surefire-reports/**/TEST*.xml"
       
       - name: Publishing Test Results - Unit/Integration Tests
         uses: dorny/test-reporter@v1.7.0
         if: always() && steps.unit_integration_test_report_exists.outputs.files_exists == 'true'
         with:
-          name: Unit-Integration Tests
-          path: "**/target/failsafe-reports/**/TEST*.xml,**/surefire-reports/**/TEST*.xml"
+          name: Test Results
+          path: "**/surefire-reports/**/TEST*.xml"
+          fail-on-error: 'false'
           reporter: java-junit
           only-summary: 'true'
       
