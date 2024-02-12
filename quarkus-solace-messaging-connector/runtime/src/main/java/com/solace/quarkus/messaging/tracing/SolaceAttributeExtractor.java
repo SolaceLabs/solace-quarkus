@@ -30,7 +30,7 @@ public class SolaceAttributeExtractor implements AttributesExtractor<SolaceTrace
     private static final class SolaceMessagingAttributesGetter implements MessagingAttributesGetter<SolaceTrace, Void> {
         @Override
         public String getSystem(final SolaceTrace solaceTrace) {
-            return "solace";
+            return "SolacePubSub+";
         }
 
         @Override
