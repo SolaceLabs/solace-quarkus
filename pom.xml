@@ -135,7 +135,6 @@
       <modules>
         <module>quarkus-solace-client</module>
         <module>quarkus-solace-messaging-connector</module>
-        <module>docs</module>
       </modules>
       <build>
         <plugins>
