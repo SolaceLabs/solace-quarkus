@@ -6,13 +6,13 @@
     <parent>
         <groupId>com.solace.quarkus</groupId>
         <artifactId>quarkus-solace-parent</artifactId>
-        <version>999-SNAPSHOT</version>
+        <version>0.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>quarkus-solace-docs</artifactId>
     <name>Quarkus Solace - Documentation</name>
-
+    <version>0.0.1-SNAPSHOT</version>
     <dependencies>
         <!-- Make sure the doc is built after the other artifacts -->
         <dependency>
@@ -38,23 +38,6 @@
                         <goals>
                             <goal>build</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>it.ozimov</groupId>
-                <artifactId>yaml-properties-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>read-project-properties</goal>
-                        </goals>
-                        <configuration>
-                            <files>
-                                <file>${project.basedir}/../.github/project.yml</file>
-                            </files>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
