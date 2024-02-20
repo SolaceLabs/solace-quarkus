@@ -96,6 +96,16 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
         updateConfigScript(scriptBuilder, "enable");
         updateConfigScript(scriptBuilder, "configure");
 
+        // telemetry configuration
+        updateConfigScript(scriptBuilder, "message-vpn default");
+        updateConfigScript(scriptBuilder, "create telemetry-profile trace");
+        updateConfigScript(scriptBuilder, "trace");
+        updateConfigScript(scriptBuilder, "no shutdown");
+        updateConfigScript(scriptBuilder, "create filter default");
+        updateConfigScript(scriptBuilder, "no shutdown");
+        updateConfigScript(scriptBuilder, "create subscription \">\"");
+        updateConfigScript(scriptBuilder, "end");
+
         // create replay log
         updateConfigScript(scriptBuilder, "message-spool message-vpn default");
         updateConfigScript(scriptBuilder, "create replay-log integration-test-replay-log");

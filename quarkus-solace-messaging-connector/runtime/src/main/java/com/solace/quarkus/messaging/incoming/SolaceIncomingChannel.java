@@ -4,9 +4,7 @@ import static com.solace.quarkus.messaging.i18n.SolaceExceptions.ex;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Flow;
@@ -124,6 +122,14 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
             solaceOpenTelemetryInstrumenter = SolaceOpenTelemetryInstrumenter.createForIncoming();
             incomingMulti = incomingMulti.map(message -> {
                 InboundMessage consumedMessage = message.getMetadata(SolaceInboundMetadata.class).get().getMessage();
+                Map<String, String> messageProperties = new HashMap<>();
+
+                messageProperties.put("messaging.solace.replication_group_message_id",
+                        consumedMessage.getReplicationGroupMessageId().toString());
+                messageProperties.put("messaging.solace.priority", Integer.toString(consumedMessage.getPriority()));
+                if (consumedMessage.getProperties().size() > 0) {
+                    messageProperties.putAll(consumedMessage.getProperties());
+                }
                 SolaceTrace solaceTrace = new SolaceTrace.Builder()
                         .withDestinationKind("queue")
                         .withTopic(consumedMessage.getDestinationName())
@@ -137,7 +143,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
                                                                 SolaceConstants.MessageUserPropertyConstants.QUEUE_PARTITION_KEY)
                                                 : null)
                         .withPayloadSize(Long.valueOf(consumedMessage.getPayloadAsBytes().length))
-                        .withProperties(consumedMessage.getProperties())
+                        .withProperties(messageProperties)
                         .build();
                 return solaceOpenTelemetryInstrumenter.traceIncoming(message, solaceTrace, true);
             });
