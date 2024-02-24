@@ -14,7 +14,6 @@ import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.model.Ulimit;
 
 public class SolaceContainer extends GenericContainer<SolaceContainer> {
 
@@ -55,7 +54,11 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
         super(dockerImageName);
         dockerImageName.assertCompatibleWith(DEFAULT_IMAGE_NAME);
         withCreateContainerCmdModifier(cmd -> {
-            cmd.getHostConfig().withShmSize(SHM_SIZE).withUlimits(new Ulimit[] { new Ulimit("nofile", 2448L, 6592L) });
+            cmd.withUser("1000");
+            cmd.getHostConfig()
+                    .withShmSize(SHM_SIZE)
+                    .withMemorySwap(-1L)
+                    .withMemoryReservation(0L);
         });
         this.waitStrategy = Wait.forLogMessage(SOLACE_READY_MESSAGE, 1).withStartupTimeout(Duration.ofSeconds(60));
         withExposedPorts(8080);
@@ -70,6 +73,7 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
 
     @Override
     protected void containerIsStarted(InspectContainerResponse containerInfo) {
+        executeCommand("chown 1000:0 -R /var/lib/solace");
         if (withClientCert) {
             executeCommand("cp", "/tmp/solace.pem", "/usr/sw/jail/certs/solace.pem");
             executeCommand("cp", "/tmp/rootCA.crt", "/usr/sw/jail/certs/rootCA.crt");
