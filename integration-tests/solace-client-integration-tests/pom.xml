@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.solace.quarkus</groupId>
         <artifactId>quarkus-solace-integration-tests-parent</artifactId>
-        <version>1.0.0-NEXT-SNAPSHOT</version>
+        <version>1.0.0-RC1</version>
     </parent>
 
     <artifactId>solace-client-integration-tests</artifactId>

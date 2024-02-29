@@ -11,7 +11,7 @@
   </parent>
   <groupId>com.solace.quarkus</groupId>
   <artifactId>quarkus-solace-parent</artifactId>
-  <version>1.0.0-NEXT-SNAPSHOT</version>
+  <version>1.0.0-RC1</version>
   <packaging>pom</packaging>
   <name>Quarkus Solace - Parent</name>
 
