@@ -16,8 +16,8 @@
   <name>Quarkus Solace - Parent</name>
 
   <scm>
-    <connection>scm:git:https://github.com/SolaceDev/solace-quarkus.git</connection>
-    <developerConnection>scm:git:https://github.com/SolaceDev/solace-quarkus.git</developerConnection>
+    <connection>scm:git:git@github.com:SolaceDev/solace-quarkus.git</connection>
+    <developerConnection>scm:git:git@github.com:SolaceDev/solace-quarkus.git</developerConnection>
     <url>https://github.com/SolaceDev/solace-quarkus</url>
   </scm>
 
