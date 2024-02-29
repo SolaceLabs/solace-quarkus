@@ -73,6 +73,14 @@ jobs:
           else
                 echo "New version: ${{ steps.version.outputs.version }} going to be released!"
           fi
+      - name: Add SSH Key for write access for commits
+        uses: kielabokkie/ssh-key-and-known-hosts-action@v1
+        with:
+          ssh-private-key: ${{ secrets.COMMIT_KEY }}
+          ssh-host: github.com
+      - name: Set Build Params
+        run: |
+            echo "SKIP_FLAGS_ALL_TESTS=-DskipTests=true" >> $GITHUB_ENV
       
       - name: Release Version - Prepare
         run: >-
@@ -90,7 +98,7 @@ jobs:
           fi
       
       - name: Verify Maven
-        run: mvn verify
+        run: mvn -B verify
       
       - name: Publishing Test Results - Unit/Integration Tests Pre-Condition
         if: always()
@@ -116,12 +124,12 @@ jobs:
 
       - name: Release Version - Checkin
         run: >-
-          mvn validate
+          mvn -B validate
           scm:checkin
           -DscmVersion=${{ github.event.inputs.sourceBranch }}
           -DscmVersionType=branch
           -Dmessage="[ci skip] prepare release ${{ steps.version.outputs.version }}" &&
-          mvn scm:tag  -Dtag=${{ steps.version.outputs.version }}
+          mvn -B scm:tag  -Dtag=${{ steps.version.outputs.version }}
 
 
       - name: GitHub Packages - Deploy Artifacts
@@ -129,7 +137,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_PASSPHRASE: ${{ secrets.GPG_SECRET }}
         run: |
-          mvn deploy -Dmaven.install.skip=true -Pgithub,publish
+          mvn -B deploy -Dmaven.install.skip=true $SKIP_FLAGS_ALL_TESTS -Pgithub,publish
       
       - name: maven-settings-xml-action
         uses: whelk-io/maven-settings-xml-action@v4
@@ -140,7 +148,7 @@ jobs:
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_SECRET }}
         run: |
-          mvn deploy -Dmaven.install.skip=true -Possrh,publish
+          mvn -B deploy -Dmaven.install.skip=true $SKIP_FLAGS_ALL_TESTS -Possrh,publish
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
@@ -155,7 +163,7 @@ jobs:
           -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}-SNAPSHOT
           -DprocessAllModules 
           -DgenerateBackupPoms=false &&
-          mvn validate scm:checkin
+          mvn -B validate scm:checkin
           -DscmVersion=${{ github.event.inputs.sourceBranch }}
           -DscmVersionType=branch
           -Dmessage="[ci skip] prepare for next development iteration"
