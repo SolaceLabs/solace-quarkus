@@ -11,14 +11,14 @@
   </parent>
   <groupId>com.solace.quarkus</groupId>
   <artifactId>quarkus-solace-parent</artifactId>
-  <version>1.0.0-RC1</version>
+  <version>1.0.0-NEXT-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Quarkus Solace - Parent</name>
 
   <scm>
-    <connection>scm:git:git@github.com:SolaceDev/solace-quarkus.git</connection>
-    <developerConnection>scm:git:git@github.com:SolaceDev/solace-quarkus.git</developerConnection>
-    <url>https://github.com/SolaceDev/solace-quarkus</url>
+    <connection>scm:git:git@github.com:SolaceLabs/solace-quarkus.git</connection>
+    <developerConnection>scm:git:git@github.com:SolaceLabs/solace-quarkus.git</developerConnection>
+    <url>https://github.com/SolaceLabs/solace-quarkus</url>
   </scm>
 
   <properties>
@@ -191,11 +191,11 @@
       <distributionManagement>
         <repository>
           <id>github</id>
-          <url>https://maven.pkg.github.com/SolaceDev/solace-quarkus</url>
+          <url>https://maven.pkg.github.com/SolaceLabs/solace-quarkus</url>
         </repository>
         <snapshotRepository>
           <id>github</id>
-          <url>https://maven.pkg.github.com/SolaceDev/solace-quarkus</url>
+          <url>https://maven.pkg.github.com/SolaceLabs/solace-quarkus</url>
         </snapshotRepository>
       </distributionManagement>
     </profile>
@@ -210,7 +210,7 @@
             <configuration>
               <serverId>ossrh</serverId>
               <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-              <autoReleaseAfterClose>false</autoReleaseAfterClose>
+              <autoReleaseAfterClose>true</autoReleaseAfterClose>
               <useReleaseProfile>false</useReleaseProfile>
             </configuration>
           </plugin>

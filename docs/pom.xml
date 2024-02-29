@@ -6,13 +6,13 @@
     <parent>
         <groupId>com.solace.quarkus</groupId>
         <artifactId>quarkus-solace-parent</artifactId>
-        <version>1.0.0-RC1</version>
+        <version>1.0.0-NEXT-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>quarkus-solace-docs</artifactId>
     <name>Quarkus Solace - Documentation</name>
-    <version>1.0.0-RC1</version>
+    <version>1.0.0-NEXT-SNAPSHOT</version>
     <dependencies>
         <!-- Make sure the doc is built after the other artifacts -->
         <dependency>

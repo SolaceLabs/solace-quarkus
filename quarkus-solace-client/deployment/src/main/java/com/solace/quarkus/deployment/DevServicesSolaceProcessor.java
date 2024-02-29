@@ -49,7 +49,7 @@ public class DevServicesSolaceProcessor {
 
     private static final ContainerLocator solaceContainerLocator = new ContainerLocator(DEV_SERVICE_LABEL, 55555);
     private static volatile RunningDevService running;
-    private static volatile SolaceDevServiceConfig cfg;
+    private static volatile SolaceLabsServiceConfig cfg;
     private static volatile boolean first = true;
 
     @BuildStep
@@ -62,7 +62,7 @@ public class DevServicesSolaceProcessor {
             LoggingSetupBuildItem loggingSetupBuildItem,
             GlobalDevServicesConfig devServicesConfig) {
 
-        SolaceDevServiceConfig configuration = getConfiguration(config);
+        SolaceLabsServiceConfig configuration = getConfiguration(config);
 
         if (running != null) {
             boolean shouldShutdownTheBroker = !configuration.equals(cfg);
@@ -124,13 +124,13 @@ public class DevServicesSolaceProcessor {
 
     }
 
-    private SolaceDevServiceConfig getConfiguration(SolaceBuildTimeConfig config) {
+    private SolaceLabsServiceConfig getConfiguration(SolaceBuildTimeConfig config) {
         SolaceBuildTimeConfig.DevServiceConfiguration cfg = config.defaultDevService();
-        return new SolaceDevServiceConfig(cfg);
+        return new SolaceLabsServiceConfig(cfg);
     }
 
     private RunningDevService startContainer(DockerStatusBuildItem dockerStatusBuildItem,
-            SolaceDevServiceConfig devServicesConfig, LaunchMode launchMode,
+            SolaceLabsServiceConfig devServicesConfig, LaunchMode launchMode,
             boolean useSharedNetwork, Optional<Duration> timeout) {
         if (!devServicesConfig.enabled) {
             // explicitly disabled
@@ -272,7 +272,7 @@ public class DevServicesSolaceProcessor {
         }
     }
 
-    private static class SolaceDevServiceConfig {
+    private static class SolaceLabsServiceConfig {
 
         final boolean enabled;
         final String serviceName;
@@ -280,7 +280,7 @@ public class DevServicesSolaceProcessor {
         final boolean shared;
         final Map<String, String> containerEnv;
 
-        public SolaceDevServiceConfig(SolaceBuildTimeConfig.DevServiceConfiguration cfg) {
+        public SolaceLabsServiceConfig(SolaceBuildTimeConfig.DevServiceConfiguration cfg) {
             enabled = cfg.devservices().enabled();
             serviceName = cfg.devservices().serviceName();
             imageName = cfg.devservices().imageName().orElse(SOLACE_IMAGE);
@@ -294,7 +294,7 @@ public class DevServicesSolaceProcessor {
                 return true;
             if (o == null || getClass() != o.getClass())
                 return false;
-            SolaceDevServiceConfig that = (SolaceDevServiceConfig) o;
+            SolaceLabsServiceConfig that = (SolaceLabsServiceConfig) o;
             return enabled == that.enabled && shared == that.shared && Objects.equals(serviceName, that.serviceName)
                     && Objects.equals(imageName, that.imageName) && Objects.equals(containerEnv, that.containerEnv);
         }
