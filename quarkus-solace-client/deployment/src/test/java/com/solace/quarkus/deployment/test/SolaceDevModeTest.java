@@ -8,7 +8,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.quarkus.test.QuarkusDevModeTest;
 
-public class SolaceLabsModeTest {
+public class SolaceDevModeTest {
 
     // Start hot reload (DevMode) test with your extension loaded
     @RegisterExtension
