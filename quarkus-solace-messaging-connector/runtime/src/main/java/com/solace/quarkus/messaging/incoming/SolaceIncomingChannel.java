@@ -45,7 +45,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     private final SolaceAckHandler ackHandler;
     private final SolaceFailureHandler failureHandler;
     private final AtomicBoolean closed = new AtomicBoolean(false);
-    private final AtomicBoolean alive = new AtomicBoolean(false);
+    private final AtomicBoolean alive = new AtomicBoolean(true);
     private final PersistentMessageReceiver receiver;
     private final Flow.Publisher<? extends Message<?>> stream;
     private final ExecutorService pollerThread;

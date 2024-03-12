@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.shaded.org.apache.commons.lang3.tuple.Pair;
@@ -50,6 +51,8 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
     private final List<Pair<String, Service>> subscribeTopicsConfiguration = new ArrayList<>();
 
     private boolean withClientCert;
+    private boolean withOAuth;
+    private boolean clientCertificateAuthority;
 
     /**
      * Create a new solace container with the specified image name.
@@ -76,6 +79,8 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
         withEnv("logging_system_output", "all");
         withEnv("username_admin_globalaccesslevel", "admin");
         withEnv("username_admin_password", "admin");
+        withNetwork(Network.SHARED);
+        withNetworkAliases("solace");
     }
 
     @Override
@@ -110,6 +115,7 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
         updateConfigScript(scriptBuilder, "create subscription \">\"");
         updateConfigScript(scriptBuilder, "end");
 
+        updateConfigScript(scriptBuilder, "configure");
         // create replay log
         updateConfigScript(scriptBuilder, "message-spool message-vpn default");
         updateConfigScript(scriptBuilder, "create replay-log integration-test-replay-log");
@@ -187,12 +193,31 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
         updateConfigScript(scriptBuilder, "exit");
 
         if (withClientCert) {
-            // Client certificate authority configuration
-            updateConfigScript(scriptBuilder, "authentication");
-            updateConfigScript(scriptBuilder, "create client-certificate-authority RootCA");
-            updateConfigScript(scriptBuilder, "certificate file rootCA.crt");
-            updateConfigScript(scriptBuilder, "show client-certificate-authority ca-name *");
-            updateConfigScript(scriptBuilder, "end");
+            if (clientCertificateAuthority) {
+                updateConfigScript(scriptBuilder, "configure");
+                // Client certificate authority configuration
+                updateConfigScript(scriptBuilder, "authentication");
+                updateConfigScript(scriptBuilder, "create client-certificate-authority RootCA");
+                updateConfigScript(scriptBuilder, "certificate file rootCA.crt");
+                updateConfigScript(scriptBuilder, "show client-certificate-authority ca-name *");
+                updateConfigScript(scriptBuilder, "end");
+
+                updateConfigScript(scriptBuilder, "configure");
+                updateConfigScript(scriptBuilder, "message-vpn " + vpn);
+                // Enable client certificate authentication
+                updateConfigScript(scriptBuilder, "authentication client-certificate");
+                updateConfigScript(scriptBuilder, "allow-api-provided-username");
+                updateConfigScript(scriptBuilder, "no shutdown");
+                updateConfigScript(scriptBuilder, "end");
+            } else {
+                updateConfigScript(scriptBuilder, "configure");
+                // Domain certificate authority configuration
+                updateConfigScript(scriptBuilder, "ssl");
+                updateConfigScript(scriptBuilder, "create domain-certificate-authority RootCA");
+                updateConfigScript(scriptBuilder, "certificate file rootCA.crt");
+                updateConfigScript(scriptBuilder, "show domain-certificate-authority ca-name *");
+                updateConfigScript(scriptBuilder, "end");
+            }
 
             // Server certificates configuration
             updateConfigScript(scriptBuilder, "configure");
@@ -200,20 +225,48 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
             updateConfigScript(scriptBuilder, "server-certificate solace.pem");
             updateConfigScript(scriptBuilder, "cipher-suite msg-backbone name AES128-SHA");
             updateConfigScript(scriptBuilder, "exit");
+            updateConfigScript(scriptBuilder, "end");
 
+        }
+
+        if (withOAuth) {
+            // Configure OAuth authentication
+            updateConfigScript(scriptBuilder, "configure");
             updateConfigScript(scriptBuilder, "message-vpn " + vpn);
-            // Enable client certificate authentication
-            updateConfigScript(scriptBuilder, "authentication client-certificate");
-            updateConfigScript(scriptBuilder, "allow-api-provided-username");
+            updateConfigScript(scriptBuilder, "authentication oauth");
             updateConfigScript(scriptBuilder, "no shutdown");
             updateConfigScript(scriptBuilder, "end");
         } else {
             // Configure VPN Basic authentication
+            updateConfigScript(scriptBuilder, "configure");
             updateConfigScript(scriptBuilder, "message-vpn " + vpn);
             updateConfigScript(scriptBuilder, "authentication basic auth-type internal");
             updateConfigScript(scriptBuilder, "no shutdown");
             updateConfigScript(scriptBuilder, "end");
         }
+
+        // create OAuth profile
+        updateConfigScript(scriptBuilder, "configure");
+        updateConfigScript(scriptBuilder, "message-vpn " + vpn);
+        updateConfigScript(scriptBuilder, "authentication");
+        updateConfigScript(scriptBuilder, "create oauth profile integration_test_oauth_profile");
+        updateConfigScript(scriptBuilder, "authorization-groups-claim-name \"\" ");
+        updateConfigScript(scriptBuilder, "oauth-role resource-server");
+        updateConfigScript(scriptBuilder, "issuer https://localhost:7778/realms/solace");
+        updateConfigScript(scriptBuilder, "disconnect-on-token-expiration");
+        updateConfigScript(scriptBuilder, "endpoints");
+        updateConfigScript(scriptBuilder, "discovery https://keycloak:8443/realms/solace/.well-known/openid-configuration");
+        updateConfigScript(scriptBuilder, "exit");
+        updateConfigScript(scriptBuilder, "username-claim-name sub");
+        updateConfigScript(scriptBuilder, "resource-server");
+        updateConfigScript(scriptBuilder, "required-audience pubsub+aud");
+        updateConfigScript(scriptBuilder, "no validate-type");
+        updateConfigScript(scriptBuilder, "required-type JWT");
+        updateConfigScript(scriptBuilder, "exit");
+        updateConfigScript(scriptBuilder, "client-id solace");
+        updateConfigScript(scriptBuilder, "client-secret solace-secret");
+        updateConfigScript(scriptBuilder, "no shutdown");
+        updateConfigScript(scriptBuilder, "end");
 
         if (!publishTopicsConfiguration.isEmpty() || !subscribeTopicsConfiguration.isEmpty()) {
             // Enable services
@@ -385,9 +438,19 @@ public class SolaceContainer extends GenericContainer<SolaceContainer> {
      * @param caFile Certified Authority ceritificate
      * @return This container.
      */
-    public SolaceContainer withClientCert(final MountableFile certFile, final MountableFile caFile) {
+    public SolaceContainer withClientCert(final MountableFile certFile, final MountableFile caFile,
+            boolean clientCertificateAuthority) {
         this.withClientCert = true;
+        this.clientCertificateAuthority = clientCertificateAuthority;
         return withCopyFileToContainer(certFile, "/tmp/solace.pem").withCopyFileToContainer(caFile, "/tmp/rootCA.crt");
+    }
+
+    /**
+     * Sets OAuth authentication
+     */
+    public SolaceContainer withOAuth() {
+        this.withOAuth = true;
+        return this;
     }
 
     /**
