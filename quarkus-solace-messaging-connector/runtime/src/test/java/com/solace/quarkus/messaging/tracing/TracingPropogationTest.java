@@ -151,6 +151,7 @@ public class TracingPropogationTest extends WeldTestBase {
         MapBasedConfig config = commonConfig()
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.client.tracing-enabled", "true")
+                .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
                 .with("mp.messaging.incoming.in.consumer.queue.subscriptions", topic)
