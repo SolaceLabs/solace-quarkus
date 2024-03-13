@@ -41,9 +41,9 @@ public class SolaceRecorder {
                 Instance<MessagingServiceClientCustomizer> reference = context.getInjectedReference(CUSTOMIZER);
                 OidcProvider oidcProvider = context.getInjectedReference(OidcProvider.class);
 
-                String authScheme = config.extra().get("authentication.scheme");
+                String authScheme = (String) properties.get(SolaceProperties.AuthenticationProperties.SCHEME);
 
-                if (oidcProvider != null && authScheme != null && authScheme.equals("AUTHENTICATION_SCHEME_OAUTH2")) {
+                if (oidcProvider != null && authScheme != null && "AUTHENTICATION_SCHEME_OAUTH2".equals(authScheme)) {
                     properties.put(SolaceProperties.AuthenticationProperties.SCHEME_OAUTH2_ACCESS_TOKEN,
                             oidcProvider.getToken().getAccessToken());
                 }
@@ -61,7 +61,9 @@ public class SolaceRecorder {
                     }
                 }
 
-                oidcProvider.init(service);
+                if ("AUTHENTICATION_SCHEME_OAUTH2".equals(authScheme)) {
+                    oidcProvider.init(service);
+                }
                 var tmp = service;
                 shutdown.addLastShutdownTask(() -> {
                     if (tmp.isConnected()) {
