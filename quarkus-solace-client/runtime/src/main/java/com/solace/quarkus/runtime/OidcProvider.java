@@ -62,7 +62,7 @@ public class OidcProvider {
                     return Uni.createFrom().voidItem();
                 })
                 .subscribe().with(x -> {
-                    if(service.isConnected()) {
+                    if (service.isConnected()) {
                         service.updateProperty(SCHEME_OAUTH2_ACCESS_TOKEN, lastToken.getAccessToken());
                     } else {
                         Log.info("Solace service is not connected, cannot update access token without valid connection");

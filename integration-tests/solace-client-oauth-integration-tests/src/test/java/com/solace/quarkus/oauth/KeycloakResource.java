@@ -50,7 +50,7 @@ public class KeycloakResource implements QuarkusTestResourceLifecycleManager {
                 Map.entry("quarkus.oidc-client.solace.client-id", "solace"),
                 Map.entry("quarkus.oidc-client.solace.credentials.secret", "solace-secret"),
                 Map.entry("quarkus.oidc-client.solace.tls.verification", "none"),
-//                Map.entry("quarkus.oidc-client.solace.refresh-token-time-skew", "5s"),
+                //                Map.entry("quarkus.oidc-client.solace.refresh-token-time-skew", "5s"),
                 Map.entry("quarkus.solace.host", solaceContainer.getOrigin(SolaceContainer.Service.SMF_SSL)),
                 Map.entry("quarkus.solace.vpn", solaceContainer.getVpn()),
                 Map.entry("quarkus.solace.oidc.refresh.interval", "5s"),

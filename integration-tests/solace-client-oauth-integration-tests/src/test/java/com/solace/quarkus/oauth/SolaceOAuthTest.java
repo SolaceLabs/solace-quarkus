@@ -1,15 +1,16 @@
 package com.solace.quarkus.oauth;
 
+import static org.awaitility.Awaitility.await;
+
+import java.util.List;
+
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
-import static org.awaitility.Awaitility.await;
 
 @QuarkusTest
 @QuarkusTestResource(value = KeycloakResource.class, restrictToAnnotatedClass = true)
@@ -52,7 +53,6 @@ class SolaceOAuthTest {
                     .then().statusCode(204);
             Thread.sleep(5000);
         }
-
 
         await().until(() -> RestAssured
                 .given().header("Accept", "application/json")
