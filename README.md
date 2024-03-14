@@ -10,7 +10,7 @@ Samples folder has examples on how to use the connector - [solace-connector-samp
 
 ## Documentation
 
-The documentation for this extension should be maintained as part of this repository and it is stored in the docs/ directory.
+The documentation for this extension should be maintained as part of this repository and it is stored in the `docs/` directory.
 
 ## Running the extension
 
