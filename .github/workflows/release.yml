@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       releaseVersion:
-        description: "Version to use when preparing a release. Use `auto` to use the latest version from the pom.xml."
+        description: "Version to use when preparing a release. Ex 1.0.0, 1.0.1-RC1, 1.0.2-EA3"
         required: true
-        default: "auto"
+        default: "1.0.0"
       sourceBranch:
         description: "Which branch contains the previous release version."
         default: "main"
@@ -49,38 +49,45 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
 
-      - name: Find version to use
-        id: version
-        run: |
-          if [[ "${{ github.event.inputs.releaseVersion }}" -eq  "auto" ]]; then
-            echo "No release version provided, using the latest version from the pom.xml"
-            new_version=`mvn -B help:evaluate -Dexpression=project.version -q -DforceStdout | sed -e 's/-SNAPSHOT$//'`
-            echo "New version will be $new_version"
-            echo version=$new_version >> $GITHUB_OUTPUT
-          else
-            echo version=${{ github.event.inputs.releaseVersion }} >> $GITHUB_OUTPUT
-          fi
-          
       - name: Pre-Release Check - Version
         env:
            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh api --method GET /repos/${{github.repository}}/releases -f sort=updated -f direction=asc > releases.json
-          release_version_exists=$(jq -r --arg RELEASE_VERSION ${{ steps.version.outputs.version }} '.[].name|select(.|test($RELEASE_VERSION))'  releases.json)
+          release_version_exists=$(jq -r --arg RELEASE_VERSION ${{ github.event.inputs.releaseVersion }} '.[].name|select(. == $RELEASE_VERSION)'  releases.json)
           if [[ ! -z "$release_version_exists" ]]; then
-                echo "Version ${{ steps.version.outputs.version }} has been previously released. Please change release version."
+                echo "Version ${{ github.event.inputs.releaseVersion }} has been previously released. Please change release version."
                 exit 1
           else
-                echo "New version: ${{ steps.version.outputs.version }} going to be released!"
+                echo "New version: ${{ github.event.inputs.releaseVersion }} going to be released!"
           fi
+      - name: Add SSH Key for write access for commits
+        uses: kielabokkie/ssh-key-and-known-hosts-action@v1
+        with:
+          ssh-private-key: ${{ secrets.COMMIT_KEY }}
+          ssh-host: github.com
+      - name: Set Build Params
+        run: |
+            echo "SKIP_FLAGS_ALL_TESTS=-DskipTests=true" >> $GITHUB_ENV
+            if echo "${{github.event.inputs.releaseVersion}}" | grep -iP 'ea|rc'; then
+              NEXT_DEV_REVISION="\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.incrementalVersion}"
+            else
+              NEXT_DEV_REVISION="\${next-revision}"
+            fi
+            echo "Calculated Params"
+            echo "NEXT_DEV_REVISION=$NEXT_DEV_REVISION"
+            echo "NEXT_DEV_REVISION=$NEXT_DEV_REVISION" >> $GITHUB_ENV
       
       - name: Release Version - Prepare
-        run: >-
-          mvn -B -U versions:set 
-          -DnewVersion=${{ steps.version.outputs.version }} 
-          -DprocessAllModules 
-          -DgenerateBackupPoms=false
-
+        run:  >-
+          mvn -B -U validate
+          versions:set-property
+          -Dproperty=revision
+          -DnewVersion="${{ github.event.inputs.releaseVersion }}" &&
+          mvn validate
+          versions:set-property
+          -Dproperty=changelist
+          -DnewVersion=""
 
       - name: Update latest release version in docs
         run: |
@@ -90,7 +97,7 @@ jobs:
           fi
       
       - name: Verify Maven
-        run: mvn verify
+        run: mvn -B verify
       
       - name: Publishing Test Results - Unit/Integration Tests Pre-Condition
         if: always()
@@ -116,12 +123,12 @@ jobs:
 
       - name: Release Version - Checkin
         run: >-
-          mvn validate
+          mvn -B validate
           scm:checkin
           -DscmVersion=${{ github.event.inputs.sourceBranch }}
           -DscmVersionType=branch
-          -Dmessage="[ci skip] prepare release ${{ steps.version.outputs.version }}" &&
-          mvn scm:tag  -Dtag=${{ steps.version.outputs.version }}
+          -Dmessage="[ci skip] prepare release ${{ github.event.inputs.releaseVersion }}" &&
+          mvn -B scm:tag  -Dtag=${{ github.event.inputs.releaseVersion }}
 
 
       - name: GitHub Packages - Deploy Artifacts
@@ -129,7 +136,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_PASSPHRASE: ${{ secrets.GPG_SECRET }}
         run: |
-          mvn deploy -Dmaven.install.skip=true -Pgithub,publish
+          mvn -B deploy -Dmaven.install.skip=true $SKIP_FLAGS_ALL_TESTS -Pgithub,publish
       
       - name: maven-settings-xml-action
         uses: whelk-io/maven-settings-xml-action@v4
@@ -140,22 +147,25 @@ jobs:
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_SECRET }}
         run: |
-          mvn deploy -Dmaven.install.skip=true -Possrh,publish
+          mvn -B deploy -Dmaven.install.skip=true $SKIP_FLAGS_ALL_TESTS -Possrh,publish
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
-          tag: "${{ steps.version.outputs.version }}"
+          tag: "${{ github.event.inputs.releaseVersion }}"
           generateReleaseNotes: true
           makeLatest: true
   
       - name: Next Develoment Version - Prepare and Checkin
         run: >-
-          mvn -B -U build-helper:parse-version versions:set 
-          -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}-SNAPSHOT
-          -DprocessAllModules 
-          -DgenerateBackupPoms=false &&
-          mvn validate scm:checkin
+          mvn -B -U validate build-helper:parse-version versions:set-property
+          -Dproperty=revision
+          -DnewVersion='${{ env.NEXT_DEV_REVISION}}' &&
+          mvn validate
+          versions:set-property
+          -Dproperty=changelist
+          -DnewVersion="-SNAPSHOT" &&
+          mvn validate scm:checkin -B
           -DscmVersion=${{ github.event.inputs.sourceBranch }}
           -DscmVersionType=branch
           -Dmessage="[ci skip] prepare for next development iteration"

@@ -11,17 +11,23 @@
   </parent>
   <groupId>com.solace.quarkus</groupId>
   <artifactId>quarkus-solace-parent</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>${revision}${sha1}${changelist}</version>
   <packaging>pom</packaging>
   <name>Quarkus Solace - Parent</name>
 
   <scm>
-    <connection>scm:git:https://github.com/SolaceLabs/solace-quarkus.git</connection>
-    <developerConnection>scm:git:https://github.com/SolaceLabs/solace-quarkus.git</developerConnection>
+    <connection>scm:git:git@github.com:SolaceLabs/solace-quarkus.git</connection>
+    <developerConnection>scm:git:git@github.com:SolaceLabs/solace-quarkus.git</developerConnection>
     <url>https://github.com/SolaceLabs/solace-quarkus</url>
   </scm>
 
   <properties>
+    <!-- Project Versioning Properties -->
+		<revision>1.0.1</revision>
+		<sha1/> <!-- Doesn't actually need to be a sha1, this is just another version modifier variable -->
+		<changelist>-SNAPSHOT</changelist>
+		<next-revision>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.nextIncrementalVersion}</next-revision>
+
     <compiler-plugin.version>3.11.0</compiler-plugin.version>
     <maven.compiler.release>11</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
