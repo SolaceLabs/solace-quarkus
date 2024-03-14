@@ -69,14 +69,25 @@ jobs:
       - name: Set Build Params
         run: |
             echo "SKIP_FLAGS_ALL_TESTS=-DskipTests=true" >> $GITHUB_ENV
+            if echo "${{github.event.inputs.releaseVersion}}" | grep -iP 'ea|rc'; then
+              NEXT_DEV_REVISION="\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.incrementalVersion}"
+            else
+              NEXT_DEV_REVISION="\${next-revision}"
+            fi
+            echo "Calculated Params"
+            echo "NEXT_DEV_REVISION=$NEXT_DEV_REVISION"
+            echo "NEXT_DEV_REVISION=$NEXT_DEV_REVISION" >> $GITHUB_ENV
       
       - name: Release Version - Prepare
-        run: >-
-          mvn -B -U versions:set 
-          -DnewVersion=${{ github.event.inputs.releaseVersion }}
-          -DprocessAllModules 
-          -DgenerateBackupPoms=false
-
+        run:  >-
+          mvn -B -U validate
+          versions:set-property
+          -Dproperty=revision
+          -DnewVersion="${{ github.event.inputs.releaseVersion }}" &&
+          mvn validate
+          versions:set-property
+          -Dproperty=changelist
+          -DnewVersion=""
 
       - name: Update latest release version in docs
         run: |
@@ -147,11 +158,14 @@ jobs:
   
       - name: Next Develoment Version - Prepare and Checkin
         run: >-
-          mvn -B -U build-helper:parse-version versions:set 
-          -DnewVersion=${{github.event.inputs.releaseVersion}}-NEXT-SNAPSHOT
-          -DprocessAllModules 
-          -DgenerateBackupPoms=false &&
-          mvn -B validate scm:checkin
+          mvn -B -U validate build-helper:parse-version versions:set-property
+          -Dproperty=revision
+          -DnewVersion='${{ env.NEXT_DEV_REVISION}}' &&
+          mvn validate
+          versions:set-property
+          -Dproperty=changelist
+          -DnewVersion="-SNAPSHOT" &&
+          mvn validate scm:checkin -B
           -DscmVersion=${{ github.event.inputs.sourceBranch }}
           -DscmVersionType=branch
           -Dmessage="[ci skip] prepare for next development iteration"
