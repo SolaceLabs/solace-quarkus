@@ -121,8 +121,8 @@ quarkus.solace.authentication.client-cert.keystore-format=
 quarkus.solace.host=tcp://localhost:55555
 quarkus.solace.vpn=default
 quarkus.solace.authentication.scheme=AUTHENTICATION_SCHEME_OAUTH2
-quarkus.solace.oidc.client-name=solace
-quarkus.solace.oidc.refresh.interval=50s
+quarkus.solace.oidc.client-name=solace // client name provided in oidc client config below
+quarkus.solace.oidc.refresh.interval=50s // Refresh interval should be less than access token expiry time. Otherwise extension will fail to update access token in solace session.
 
 quarkus.oidc-client.solace.auth-server-url=http://localhost:7777/auth/realms/master
 quarkus.oidc-client.solace.client-id=<client-id>
