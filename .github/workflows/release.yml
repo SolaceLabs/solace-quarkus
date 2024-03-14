@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       releaseVersion:
-        description: "Version to use when preparing a release. Use `auto` to use the latest version from the pom.xml."
+        description: "Version to use when preparing a release. Ex 1.0.0, 1.0.1-RC1, 1.0.2-EA3"
         required: true
         default: "1.0.0"
       sourceBranch:
