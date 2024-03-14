@@ -311,8 +311,8 @@ quarkus.solace.vpn=default
 quarkus.solace.authentication.basic.username=basic
 quarkus.solace.authentication.basic.password=basic
 
-mp.messaging.incoming.temperatures-out.connector=quarkus-solace
-mp.messaging.incoming.temperatures-out.producer.topic=temperatures
+mp.messaging.outgoing.temperatures-out.connector=quarkus-solace
+mp.messaging.outgoing.temperatures-out.producer.topic=temperatures
 ----
 
 1. When running in dev mode or tests dev services will automatically start a Solace PubSub+ broker and if broker configuration details are not provided the extension automatically picks up the details of broker started by dev services.
@@ -469,6 +469,28 @@ public class TemperaturesProcessor {
 }
 ----
 
+[[open-telemetry-tracing]]
+== Open Telemetry Tracing
+
+Extension supports generating trace messages for th messages consumed and published by the extension. To enabling tracing for consumers and producers use the below configuration.
+[source,yaml]
+----
+quarkus.solace.host=tcp://localhost:55555
+quarkus.solace.vpn=default
+quarkus.solace.authentication.basic.username=test
+quarkus.solace.authentication.basic.password=test
+
+mp.messaging.incoming.temperatures.connector=quarkus-solace
+mp.messaging.incoming.temperatures.consumer.queue.name=temperatures
+mp.messaging.incoming.temperatures.client.tracing-enabled=true
+
+mp.messaging.outgoing.temperatures-out.connector=quarkus-solace
+mp.messaging.outgoing.temperatures-out.producer.topic=temperatures
+mp.messaging.outgoing.temperatures-out.client.tracing-enabled=true
+----
+
+NOTE: Context Propagation is not fully supported in current version.
+
 [[health-checks]]
 == Health Checks
 
@@ -485,7 +507,7 @@ The liveness check captures any unrecoverable failure happening during the commu
 The readiness check verifies that the Quarkus Solace Messaging Connector is ready to consume/produce messages to the configured Solace queues/topics.
 
 [[dev-services]]
-Dev Services
+== Dev Services
 
 Solace Dev Services for Quarkus will spin up latest version of Solace PubSub standard with label `solace` when running tests or in dev mode. Solace Dev Services are enabled by default and will check for any existing containers with same label to reuse. If none is present a new container is started.
 
