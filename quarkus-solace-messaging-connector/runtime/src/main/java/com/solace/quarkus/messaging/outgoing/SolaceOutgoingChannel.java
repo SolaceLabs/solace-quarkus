@@ -44,7 +44,7 @@ public class SolaceOutgoingChannel
     private final SenderProcessor processor;
     private final boolean gracefulShutdown;
     private final long gracefulShutdownWaitTimeout;
-    private final AtomicBoolean alive = new AtomicBoolean(false);
+    private final AtomicBoolean alive = new AtomicBoolean(true);
     private final List<Throwable> failures = new ArrayList<>();
     private final SolaceOpenTelemetryInstrumenter solaceOpenTelemetryInstrumenter;
     private volatile boolean isPublisherReady = true;
