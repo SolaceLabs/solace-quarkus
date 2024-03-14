@@ -2,6 +2,7 @@ package com.solace.quarkus.deployment;
 
 import static io.quarkus.runtime.LaunchMode.DEVELOPMENT;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +15,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
-import com.github.dockerjava.api.model.Ulimit;
+import com.github.dockerjava.api.command.InspectContainerResponse;
 
 import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildStep;
@@ -211,13 +212,9 @@ public class DevServicesSolaceProcessor {
             addExposedPort(2222); // SSH connection to CLI
 
             withCreateContainerCmdModifier(cmd -> {
-                cmd.getHostConfig().withShmSize((long) Math.pow(1024, 3))
-                        .withUlimits(new Ulimit[] {
-                                new Ulimit("core", -1, -1),
-                                new Ulimit("memlock", -1, -1),
-                                new Ulimit("nofile", 2448L, 42192L),
-                        })
-                        .withCpusetCpus("0-1")
+                cmd.withUser("1000");
+                cmd.getHostConfig()
+                        .withShmSize((long) Math.pow(1024, 3))
                         .withMemorySwap(-1L)
                         .withMemoryReservation(0L);
             });
@@ -245,6 +242,11 @@ public class DevServicesSolaceProcessor {
             }
         }
 
+        @Override
+        protected void containerIsStarted(InspectContainerResponse containerInfo) {
+            executeCommand("chown 1000:0 -R /var/lib/solace");
+        }
+
         public int getPort() {
             if (useSharedNetwork) {
                 return 55555;
@@ -256,6 +258,17 @@ public class DevServicesSolaceProcessor {
         @Override
         public String getHost() {
             return useSharedNetwork ? hostName : super.getHost();
+        }
+
+        private void executeCommand(String... command) {
+            try {
+                ExecResult execResult = execInContainer(command);
+                if (execResult.getExitCode() != 0) {
+                    logger().error("Could not execute command {}: {}", command, execResult.getStderr());
+                }
+            } catch (IOException | InterruptedException e) {
+                logger().error("Could not execute command {}: {}", command, e.getMessage());
+            }
         }
     }
 
