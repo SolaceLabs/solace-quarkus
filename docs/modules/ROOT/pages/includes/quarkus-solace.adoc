@@ -193,4 +193,36 @@ endif::add-copy-button-to-env-var[]
 --|`Map<String,String>` 
 |
 
+a| [[quarkus-solace_quarkus.solace-oidc-client-name]]`link:#quarkus-solace_quarkus.solace-oidc-client-name[quarkus.solace.oidc.client-name]`
+
+
+[.description]
+--
+Optional value to configure client name provided in oidc client configuration in extension.
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_OIDC_CLIENT-NAMEL+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_SOLACE_OIDC_CLIENT-NAME+++`
+endif::add-copy-button-to-env-var[]
+--|`Map<String,String>`
+|
+
+a| [[quarkus-solace_quarkus.solace-oidc-refresh-interval]]`link:#quarkus-solace_quarkus.solace-oidc-refresh-interval[quarkus.solace.oidc.refresh.interval]`
+
+
+[.description]
+--
+Interval in seconds to fetch new access token by extension and update current solace session. This interval should be less than access token expiry time. For example if access token expires in 60s then refresh interval should be configured to 50s. The interval time should make sure that extension has sufficient time to fetch and update access token.
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_OIDC_REFRESH_INTERVAL+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_SOLACE_OIDC_REFRESH_INTERVAL+++`
+endif::add-copy-button-to-env-var[]
+--|`Map<String,String>`
+|
+
 |===

@@ -101,7 +101,7 @@ quarkus.solace.tls.trust-store-type=
 quarkus.solace.tls.trust-store-password=
 ----
 
-{empty}3. Connecting to a standalone broker with TLS, trust store and client certificate authentication. In case of client certificate authentication broker will read from configured username source(ex: Common Name, Subject Alt Name etc...). Refer to https://docs.solace.com/Security/Configuring-Client-Authentication.htm#Client-Cert[Solace Client Certificate Authentication].
+{empty}4. Connecting to a standalone broker with TLS, trust store and client certificate authentication. In case of client certificate authentication broker will read from configured username source(ex: Common Name, Subject Alt Name etc...). Refer to https://docs.solace.com/Security/Configuring-Client-Authentication.htm#Client-Cert[Solace Client Certificate Authentication].
 [source,yaml]
 ----
 quarkus.solace.host=tcps://localhost:55443
@@ -115,7 +115,27 @@ quarkus.solace.authentication.client-cert.keystore-password=
 quarkus.solace.authentication.client-cert.keystore-format=
 ----
 
-{empty}4. Connecting to a HA broker. Here you can configure both active and standby URL and the client will switch connectivity based on availability.
+{empty}5. Connecting to a standalone broker with OAUTH authentication scheme.
+[source,yaml]
+----
+quarkus.solace.host=tcp://localhost:55555
+quarkus.solace.vpn=default
+quarkus.solace.authentication.scheme=AUTHENTICATION_SCHEME_OAUTH2
+quarkus.solace.oidc.client-name=solace
+quarkus.solace.oidc.refresh.interval=50s
+
+quarkus.oidc-client.solace.auth-server-url=http://localhost:7777/auth/realms/master
+quarkus.oidc-client.solace.client-id=<client-id>
+quarkus.oidc-client.solace.credentials.secret=<client-secret>
+# 'client' is a shortcut for `client_credentials`
+quarkus.oidc-client.solace.grant.type=client
+----
+
+For more details on Quarkus OIDC client supported configuration please refer to https://quarkus.io/guides/security-openid-connect-client-reference[OPENID CONNECT (OIDC) AND OAUTH2 CLIENT AND FILTERS]
+
+NOTE: The current version is tested with client_credentials grant type where Solace broker is configured as Resource Server.
+
+{empty}6. Connecting to a HA broker. Here you can configure both active and standby URL and the client will switch connectivity based on availability. Remaining configurations and authentication mechanisms can be used as-is.
 [source,yaml]
 ----
 quarkus.solace.host=tcp://active-host-name:55555,tcp://standby-host-name:55555
