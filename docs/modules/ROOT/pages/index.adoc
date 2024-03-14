@@ -69,7 +69,7 @@ include::includes/quarkus-solace-extension-common.adoc[leveloffset=+1, opts=opti
 [[configuring-quarkus-solace-client]]
 == Configuring Quarkus Solace Client
 
-Solace Broker supports different ways to connect and authenticate users. This section shows how to pass <<quarkus-solace_quarkus.solace-extra, extra properties>> to quarkus solace client in different scenarios.
+Solace Broker supports different ways to connect and authenticate users. This section shows how to pass <<quarkus-solace_quarkus.solace-extra, extra properties>> to quarkus solace client in different scenarios. Please refer to https://docs.solace.com/API-Developer-Online-Ref-Documentation/pubsubplus-java/constant-values.html#com.solace.messaging.config.SolaceProperties[Solace Properties] for supported properties and definitions.
 
 {empty}1. Connecting to a standalone broker with basic authentication
 [source,yaml]
@@ -131,11 +131,33 @@ quarkus.oidc-client.solace.credentials.secret=<client-secret>
 quarkus.oidc-client.solace.grant.type=client
 ----
 
-For more details on Quarkus OIDC client supported configuration please refer to https://quarkus.io/guides/security-openid-connect-client-reference[OPENID CONNECT (OIDC) AND OAUTH2 CLIENT AND FILTERS]
+{empty}6. Connecting to a standalone broker with TLS and OAUTH authentication scheme.
+[source,yaml]
+----
+quarkus.solace.host=tcps://localhost:55443
+quarkus.solace.vpn=default
+quarkus.solace.authentication.scheme=AUTHENTICATION_SCHEME_OAUTH2
+quarkus.solace.tls.trust-store-path=
+quarkus.solace.tls.trust-store-type=
+quarkus.solace.tls.trust-store-password=
+quarkus.solace.oidc.client-name=solace // client name provided in oidc client config below
+quarkus.solace.oidc.refresh.interval=50s // Refresh interval should be less than access token expiry time. Otherwise extension will fail to update access token in solace session.
+
+quarkus.oidc-client.solace.auth-server-url=http://localhost:7777/auth/realms/master
+quarkus.oidc-client.solace.client-id=<client-id>
+quarkus.oidc-client.solace.credentials.secret=<client-secret>
+# 'client' is a shortcut for `client_credentials`
+quarkus.oidc-client.solace.grant.type=client
+quarkus.oidc-client.solace.tls.trust-store-file=<path-to-truststore-file>
+quarkus.oidc-client.solace.tls.key-store-password=
+quarkus.oidc-client.solace.tls.verification=<enable-or-disable-tls-verification>
+----
+
+For more details on Quarkus OIDC client supported configuration please refer to https://quarkus.io/guides/security-openid-connect-client-reference[OPENID CONNECT (OIDC) AND OAUTH2 CLIENT AND FILTERS] and https://quarkus.io/guides/security-oidc-configuration-properties-reference[OIDC configuration reference]
 
 NOTE: The current version is tested with client_credentials grant type where Solace broker is configured as Resource Server.
 
-{empty}6. Connecting to a HA broker. Here you can configure both active and standby URL and the client will switch connectivity based on availability. Remaining configurations and authentication mechanisms can be used as-is.
+{empty}7. Connecting to a HA broker. Here you can configure both active and standby URL and the client will switch connectivity based on availability. Remaining configurations and authentication mechanisms can be used as-is.
 [source,yaml]
 ----
 quarkus.solace.host=tcp://active-host-name:55555,tcp://standby-host-name:55555
