@@ -1,4 +1,4 @@
-package com.solace.quarkus.messaging.base;
+package com.solace.quarkus.oauth;
 
 import java.io.IOException;
 import java.time.Duration;

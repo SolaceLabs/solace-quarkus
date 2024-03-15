@@ -24,6 +24,11 @@
             <artifactId>smallrye-connector-attribute-processor</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.smallrye.reactive</groupId>
+            <artifactId>smallrye-reactive-messaging-otel</artifactId>
+            <version>4.16.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.solace</groupId>
             <artifactId>solace-messaging-client</artifactId>
         </dependency>
@@ -132,6 +137,13 @@
             <artifactId>slf4j-log4j12</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-admin-client</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>

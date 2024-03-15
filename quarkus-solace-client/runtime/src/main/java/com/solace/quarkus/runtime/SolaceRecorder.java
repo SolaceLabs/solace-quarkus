@@ -38,11 +38,18 @@ public class SolaceRecorder {
                     }
                 }
 
+                Instance<MessagingServiceClientCustomizer> reference = context.getInjectedReference(CUSTOMIZER);
+                OidcProvider oidcProvider = context.getInjectedReference(OidcProvider.class);
+
+                String authScheme = (String) properties.get(SolaceProperties.AuthenticationProperties.SCHEME);
+
+                if (oidcProvider != null && authScheme != null && "AUTHENTICATION_SCHEME_OAUTH2".equals(authScheme)) {
+                    properties.put(SolaceProperties.AuthenticationProperties.SCHEME_OAUTH2_ACCESS_TOKEN,
+                            oidcProvider.getToken().getAccessToken());
+                }
+
                 MessagingServiceClientBuilder builder = MessagingService.builder(ConfigurationProfile.V1)
                         .fromProperties(properties);
-
-                Instance<MessagingServiceClientCustomizer> reference = context.getInjectedReference(CUSTOMIZER);
-
                 MessagingService service;
                 if (reference.isUnsatisfied()) {
                     service = builder.build();
@@ -54,12 +61,16 @@ public class SolaceRecorder {
                     }
                 }
 
+                if ("AUTHENTICATION_SCHEME_OAUTH2".equals(authScheme)) {
+                    oidcProvider.init(service);
+                }
                 var tmp = service;
                 shutdown.addLastShutdownTask(() -> {
                     if (tmp.isConnected()) {
                         tmp.disconnect();
                     }
                 });
+
                 return service.connect();
             }
         };

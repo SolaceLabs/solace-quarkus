@@ -6,12 +6,8 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 import java.time.Duration;
 
 import org.jboss.logging.Logger;
-import org.junit.jupiter.api.extension.BeforeAllCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.*;
 import org.junit.jupiter.api.extension.ExtensionContext.Store.CloseableResource;
-import org.junit.jupiter.api.extension.ParameterContext;
-import org.junit.jupiter.api.extension.ParameterResolutionException;
-import org.junit.jupiter.api.extension.ParameterResolver;
 
 public class SolaceBrokerExtension implements BeforeAllCallback, ParameterResolver, CloseableResource {
 
