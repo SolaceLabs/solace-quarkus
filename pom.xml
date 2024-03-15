@@ -14,7 +14,11 @@
   <version>${revision}${sha1}${changelist}</version>
   <packaging>pom</packaging>
   <name>Quarkus Solace - Parent</name>
-
+  <url>https://github.com/SolaceLabs/solace-quarkus</url>
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/SolaceLabs/solace-quarkus/issues</url>
+  </issueManagement>
   <scm>
     <connection>scm:git:git@github.com:SolaceLabs/solace-quarkus.git</connection>
     <developerConnection>scm:git:git@github.com:SolaceLabs/solace-quarkus.git</developerConnection>
@@ -108,7 +112,7 @@
           <artifactId>flatten-maven-plugin</artifactId>
           <version>1.6.0</version>
           <configuration>
-            <flattenMode>ossrh</flattenMode>
+            <flattenMode>bom</flattenMode>
             <updatePomFile>true</updatePomFile>
           </configuration>
         </plugin>
