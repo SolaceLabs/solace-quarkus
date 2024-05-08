@@ -33,6 +33,8 @@ public class OidcProvider {
 
     private volatile Tokens lastToken;
 
+    private MessagingService service;
+
     Tokens getToken() {
         OidcClient client = getClient();
         Tokens firstToken = client.getTokens().await().indefinitely();
@@ -44,11 +46,14 @@ public class OidcProvider {
         OidcClient client = getClient();
         Multi.createFrom().ticks().every(duration)
                 .emitOn(Infrastructure.getDefaultWorkerPool())
-                .filter(x -> lastToken == null
-                        || lastToken.getRefreshTokenTimeSkew() == null
-                        || lastToken.isAccessTokenWithinRefreshInterval())
+                //                .filter(x -> {
+                //                    return lastToken == null
+                //                            || lastToken.getRefreshTokenTimeSkew() == null
+                //                            || lastToken.isAccessTokenWithinRefreshInterval();
+                //                })
                 .call(() -> {
-                    if (lastToken != null && lastToken.getRefreshToken() != null) {
+                    if (lastToken != null && lastToken.getRefreshToken() != null
+                            && lastToken.isAccessTokenWithinRefreshInterval()) {
                         Log.info("Refreshing access token for Solace connection");
                         return client.refreshTokens(lastToken.getRefreshToken()).invoke(tokens -> lastToken = tokens);
                     } else {
@@ -64,6 +69,7 @@ public class OidcProvider {
                 .subscribe().with(x -> {
                     if (service.isConnected()) {
                         service.updateProperty(SCHEME_OAUTH2_ACCESS_TOKEN, lastToken.getAccessToken());
+                        Log.info("Updated Solace Session with latest access token");
                     } else {
                         Log.info("Solace service is not connected, cannot update access token without valid connection");
                     }
