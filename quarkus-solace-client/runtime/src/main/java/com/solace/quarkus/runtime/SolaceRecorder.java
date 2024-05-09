@@ -1,5 +1,7 @@
 package com.solace.quarkus.runtime;
 
+import static com.solace.messaging.config.SolaceProperties.AuthenticationProperties.SCHEME_OAUTH2_ACCESS_TOKEN;
+
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
@@ -14,6 +16,7 @@ import com.solace.messaging.config.profile.ConfigurationProfile;
 import com.solace.quarkus.MessagingServiceClientCustomizer;
 
 import io.quarkus.arc.SyntheticCreationalContext;
+import io.quarkus.logging.Log;
 import io.quarkus.runtime.ShutdownContext;
 import io.quarkus.runtime.annotations.Recorder;
 
@@ -68,6 +71,13 @@ public class SolaceRecorder {
                 shutdown.addLastShutdownTask(() -> {
                     if (tmp.isConnected()) {
                         tmp.disconnect();
+                    }
+                });
+
+                service.addReconnectionAttemptListener(serviceEvent -> {
+                    Log.info("Reconnecting to Solace broker due to " + serviceEvent.getMessage());
+                    if (oidcProvider != null && authScheme != null && "AUTHENTICATION_SCHEME_OAUTH2".equals(authScheme)) {
+                        service.updateProperty(SCHEME_OAUTH2_ACCESS_TOKEN, oidcProvider.getToken().getAccessToken());
                     }
                 });
 
