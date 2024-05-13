@@ -42,15 +42,11 @@ public class OidcProvider {
         return firstToken;
     }
 
+    // @Todo Check if refresh interval is required as token is updated during reconnect in SolaceRecorder.java file. Need to be removed after proper analysis of corner cases.
     void init(MessagingService service) {
         OidcClient client = getClient();
         Multi.createFrom().ticks().every(duration)
                 .emitOn(Infrastructure.getDefaultWorkerPool())
-                //                .filter(x -> {
-                //                    return lastToken == null
-                //                            || lastToken.getRefreshTokenTimeSkew() == null
-                //                            || lastToken.isAccessTokenWithinRefreshInterval();
-                //                })
                 .call(() -> {
                     if (lastToken != null && lastToken.getRefreshToken() != null
                             && lastToken.isAccessTokenWithinRefreshInterval()) {

@@ -74,6 +74,7 @@ public class SolaceRecorder {
                     }
                 });
 
+                // Update access token on reconnect to make sure invalid token is not sent. This can happen when a reconnection happens event before scheduled token expiry.
                 service.addReconnectionAttemptListener(serviceEvent -> {
                     Log.info("Reconnecting to Solace broker due to " + serviceEvent.getMessage());
                     if (oidcProvider != null && authScheme != null && "AUTHENTICATION_SCHEME_OAUTH2".equals(authScheme)) {
