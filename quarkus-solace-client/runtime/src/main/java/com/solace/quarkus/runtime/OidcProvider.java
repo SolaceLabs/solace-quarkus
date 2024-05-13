@@ -33,8 +33,6 @@ public class OidcProvider {
 
     private volatile Tokens lastToken;
 
-    private MessagingService service;
-
     Tokens getToken() {
         OidcClient client = getClient();
         Tokens firstToken = client.getTokens().await().indefinitely();
@@ -75,10 +73,6 @@ public class OidcProvider {
     OidcClient getClient() {
         return oidcClientName.map(clients::getClient)
                 .orElseGet(clients::getClient);
-    }
-
-    public Tokens getLastToken() {
-        return lastToken;
     }
 
 }
