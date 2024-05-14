@@ -123,6 +123,7 @@ quarkus.solace.vpn=default
 quarkus.solace.authentication.scheme=AUTHENTICATION_SCHEME_OAUTH2
 quarkus.solace.oidc.client-name=solace // client name provided in oidc client config below
 quarkus.solace.oidc.refresh.interval=50s // Refresh interval should be less than access token expiry time. Otherwise extension will fail to update access token in solace session.
+quarkus.solace.oidc.refresh.timeout=10s // Token Refresh API timeout. Default is set to 10 seconds.
 
 quarkus.oidc-client.solace.auth-server-url=http://localhost:7777/auth/realms/master
 quarkus.oidc-client.solace.client-id=<client-id>
@@ -142,6 +143,7 @@ quarkus.solace.tls.trust-store-type=
 quarkus.solace.tls.trust-store-password=
 quarkus.solace.oidc.client-name=solace // client name provided in oidc client config below
 quarkus.solace.oidc.refresh.interval=50s // Refresh interval should be less than access token expiry time. Otherwise extension will fail to update access token in solace session.
+quarkus.solace.oidc.refresh.timeout=10s // Token Refresh API timeout. Default is set to 10 seconds.
 
 quarkus.oidc-client.solace.auth-server-url=http://localhost:7777/auth/realms/master
 quarkus.oidc-client.solace.client-id=<client-id>

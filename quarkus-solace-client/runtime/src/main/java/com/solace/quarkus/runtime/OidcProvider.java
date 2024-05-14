@@ -25,6 +25,9 @@ public class OidcProvider {
     @ConfigProperty(name = "quarkus.solace.oidc.refresh.interval", defaultValue = "60s")
     Duration duration;
 
+    @ConfigProperty(name = "quarkus.solace.oidc.refresh.timeout", defaultValue = "10s")
+    Duration refreshTimeout;
+
     @ConfigProperty(name = "quarkus.solace.oidc.client-name")
     Optional<String> oidcClientName;
 
@@ -43,15 +46,17 @@ public class OidcProvider {
     void init(MessagingService service) {
         OidcClient client = getClient();
         Multi.createFrom().ticks().every(duration)
+                .onOverflow().drop()
                 .emitOn(Infrastructure.getDefaultWorkerPool())
                 .call(() -> {
                     if (lastToken != null && lastToken.getRefreshToken() != null
                             && lastToken.isAccessTokenWithinRefreshInterval()) {
                         Log.info("Refreshing access token for Solace connection");
-                        return client.refreshTokens(lastToken.getRefreshToken()).invoke(tokens -> lastToken = tokens);
+                        return client.refreshTokens(lastToken.getRefreshToken()).invoke(tokens -> lastToken = tokens).ifNoItem()
+                                .after(refreshTimeout).fail();
                     } else {
                         Log.info("Acquiring access token for Solace connection");
-                        return client.getTokens().invoke(tokens -> lastToken = tokens);
+                        return client.getTokens().invoke(tokens -> lastToken = tokens).ifNoItem().after(refreshTimeout).fail();
                     }
                 })
                 .onFailure().call(t -> {
