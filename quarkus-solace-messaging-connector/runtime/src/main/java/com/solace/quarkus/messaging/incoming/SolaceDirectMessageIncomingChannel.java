@@ -3,7 +3,6 @@ package com.solace.quarkus.messaging.incoming;
 import static com.solace.quarkus.messaging.i18n.SolaceExceptions.ex;
 
 import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,16 +13,11 @@ import java.util.stream.Collectors;
 
 import org.eclipse.microprofile.reactive.messaging.Message;
 
+import com.solace.messaging.DirectMessageReceiverBuilder;
 import com.solace.messaging.MessagingService;
-import com.solace.messaging.PersistentMessageReceiverBuilder;
-import com.solace.messaging.config.MessageAcknowledgementConfiguration.Outcome;
-import com.solace.messaging.config.MissingResourcesCreationConfiguration.MissingResourcesCreationStrategy;
-import com.solace.messaging.config.ReceiverActivationPassivationConfiguration;
-import com.solace.messaging.config.ReplayStrategy;
-import com.solace.messaging.config.SolaceConstants;
+import com.solace.messaging.config.*;
+import com.solace.messaging.receiver.DirectMessageReceiver;
 import com.solace.messaging.receiver.InboundMessage;
-import com.solace.messaging.receiver.PersistentMessageReceiver;
-import com.solace.messaging.resources.Queue;
 import com.solace.messaging.resources.TopicSubscription;
 import com.solace.quarkus.messaging.SolaceConnectorIncomingConfiguration;
 import com.solace.quarkus.messaging.fault.*;
@@ -38,80 +32,64 @@ import io.vertx.core.impl.VertxInternal;
 import io.vertx.mutiny.core.Context;
 import io.vertx.mutiny.core.Vertx;
 
-public class SolaceIncomingChannel implements ReceiverActivationPassivationConfiguration.ReceiverStateChangeListener {
-
+public class SolaceDirectMessageIncomingChannel
+        implements ReceiverActivationPassivationConfiguration.ReceiverStateChangeListener {
     private final String channel;
     private final Context context;
     private final SolaceAckHandler ackHandler;
     private final SolaceFailureHandler failureHandler;
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final AtomicBoolean alive = new AtomicBoolean(true);
-    private final PersistentMessageReceiver receiver;
+    private final DirectMessageReceiver receiver;
     private final Flow.Publisher<? extends Message<?>> stream;
     private final ExecutorService pollerThread;
     private final boolean gracefulShutdown;
     private final long gracefulShutdownWaitTimeout;
     private final List<Throwable> failures = new ArrayList<>();
     private final SolaceOpenTelemetryInstrumenter solaceOpenTelemetryInstrumenter;
-    private volatile MessagingService solace;
+    private final MessagingService solace;
 
     // Assuming we won't ever exceed the limit of an unsigned long...
     private final IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker = new IncomingMessagesUnsignedCounterBarrier();
 
-    public SolaceIncomingChannel(Vertx vertx, SolaceConnectorIncomingConfiguration ic, MessagingService solace) {
+    public SolaceDirectMessageIncomingChannel(Vertx vertx, SolaceConnectorIncomingConfiguration ic, MessagingService solace) {
         this.solace = solace;
         this.channel = ic.getChannel();
         this.context = Context.newInstance(((VertxInternal) vertx.getDelegate()).createEventLoopContext());
         this.gracefulShutdown = ic.getClientGracefulShutdown();
         this.gracefulShutdownWaitTimeout = ic.getClientGracefulShutdownWaitTimeout();
-        Outcome[] outcomes = new Outcome[] { Outcome.ACCEPTED };
-        if (ic.getConsumerQueueSupportsNacks()) {
-            outcomes = new Outcome[] { Outcome.ACCEPTED, Outcome.FAILED, Outcome.REJECTED };
-        }
-        PersistentMessageReceiverBuilder builder = solace.createPersistentMessageReceiverBuilder()
-                .withMessageClientAcknowledgement()
-                .withRequiredMessageClientOutcomeOperationSupport(outcomes)
-                .withActivationPassivationSupport(this);
+        MessageAcknowledgementConfiguration.Outcome[] outcomes = new MessageAcknowledgementConfiguration.Outcome[] {
+                MessageAcknowledgementConfiguration.Outcome.ACCEPTED };
 
-        ic.getConsumerQueueSelectorQuery().ifPresent(builder::withMessageSelector);
-        ic.getConsumerQueueReplayStrategy().ifPresent(s -> {
-            switch (s) {
-                case "all-messages":
-                    builder.withMessageReplay(ReplayStrategy.allMessages());
-                    break;
-                case "time-based":
-                    builder.withMessageReplay(getTimeBasedReplayStrategy(ic));
-                    break;
-                case "replication-group-message-id":
-                    builder.withMessageReplay(getGroupMessageIdReplayStrategy(ic));
-                    break;
-            }
-        });
-        if (ic.getConsumerQueueAddAdditionalSubscriptions()) {
-            String subscriptions = ic.getConsumerSubscriptions().orElse(this.channel);
-            builder.withSubscriptions(Arrays.stream(subscriptions.split(","))
-                    .map(TopicSubscription::of)
-                    .toArray(TopicSubscription[]::new));
-        }
-        switch (ic.getConsumerQueueMissingResourceCreationStrategy()) {
-            case "create-on-start":
-                builder.withMissingResourcesCreationStrategy(MissingResourcesCreationStrategy.CREATE_ON_START);
+        DirectMessageReceiverBuilder builder = solace.createDirectMessageReceiverBuilder();
+        String subscriptions = ic.getConsumerSubscriptions().orElse(this.channel);
+        builder.withSubscriptions(Arrays.stream(subscriptions.split(","))
+                .map(TopicSubscription::of)
+                .toArray(TopicSubscription[]::new));
+
+        switch (ic.getClientTypeDirectBackPressureStrategy()) {
+            case "oldest":
+                builder.onBackPressureDropLatest(ic.getClientTypeDirectBackPressureBufferCapacity());
                 break;
-            case "do-not-create":
-                builder.withMissingResourcesCreationStrategy(MissingResourcesCreationStrategy.DO_NOT_CREATE);
+            case "latest":
+                builder.onBackPressureDropOldest(ic.getClientTypeDirectBackPressureBufferCapacity());
+                break;
+            default:
+                builder.onBackPressureElastic();
                 break;
         }
 
-        this.receiver = builder.build(getQueue(ic));
+        this.receiver = builder.build();
+
         boolean lazyStart = ic.getClientLazyStart();
-        this.ackHandler = new SolaceAckHandler(receiver);
+        this.ackHandler = null;
         this.failureHandler = createFailureHandler(ic, solace);
 
         // TODO Here use a subscription receiver.receiveAsync with an internal queue
         this.pollerThread = Executors.newSingleThreadExecutor();
 
         Multi<? extends Message<?>> incomingMulti = Multi.createBy().repeating()
-                .uni(() -> Uni.createFrom().item(receiver::receiveMessage)
+                .uni(() -> Uni.createFrom().item(this.receiver::receiveMessage)
                         .runSubscriptionOn(pollerThread))
                 .until(__ -> closed.get())
                 .emitOn(context::runOnContext)
@@ -127,7 +105,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
                 messageProperties.put("messaging.solace.replication_group_message_id",
                         consumedMessage.getReplicationGroupMessageId().toString());
                 messageProperties.put("messaging.solace.priority", Integer.toString(consumedMessage.getPriority()));
-                if (!consumedMessage.getProperties().isEmpty()) {
+                if (consumedMessage.getProperties().size() > 0) {
                     messageProperties.putAll(consumedMessage.getProperties());
                 }
                 SolaceTrace solaceTrace = new SolaceTrace.Builder()
@@ -142,7 +120,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
                                                         .getProperty(
                                                                 SolaceConstants.MessageUserPropertyConstants.QUEUE_PARTITION_KEY)
                                                 : null)
-                        .withPayloadSize((long) consumedMessage.getPayloadAsBytes().length)
+                        .withPayloadSize(Long.valueOf(consumedMessage.getPayloadAsBytes().length))
                         .withProperties(messageProperties)
                         .build();
                 return solaceOpenTelemetryInstrumenter.traceIncoming(message, solaceTrace, true);
@@ -153,14 +131,15 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
 
         this.stream = incomingMulti.plug(m -> lazyStart
                 ? m.onSubscription()
-                        .call(() -> Uni.createFrom().completionStage(receiver.startAsync()))
+                        .call(() -> Uni.createFrom().completionStage(this.receiver.startAsync()))
                 : m)
                 .onItem().invoke(() -> alive.set(true))
                 .onFailure().retry().withBackOff(Duration.ofSeconds(1)).atMost(3).onFailure().invoke(this::reportFailure);
 
         if (!lazyStart) {
-            receiver.start();
+            this.receiver.start();
         }
+
     }
 
     private synchronized void reportFailure(Throwable throwable) {
@@ -178,46 +157,19 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
         switch (actualStrategy) {
             case IGNORE:
                 return new SolaceIgnoreFailure(ic.getChannel());
-            case FAIL:
-                return new SolaceFail(ic.getChannel(), receiver);
-            case DISCARD:
-                return new SolaceDiscard(ic.getChannel(), receiver);
             case ERROR_TOPIC:
                 if (ic.getConsumerErrorTopic().isEmpty()) {
                     throw ex.illegalArgumentInvalidFailureStrategy(strategy);
                 }
                 return new SolaceErrorTopic(ic.getChannel(), ic.getConsumerErrorTopic().get(),
                         ic.getConsumerErrorMessageDmqEligible(), ic.getConsumerErrorMessageTtl().orElse(null),
-                        ic.getConsumerErrorMessageMaxDeliveryAttempts(), receiver, solace);
+                        ic.getConsumerErrorMessageMaxDeliveryAttempts(), null, solace);
             default:
-                throw ex.illegalArgumentInvalidFailureStrategy(strategy);
+                throw ex.illegalArgumentInvalidFailureStrategy(
+                        "Direct Consumer supports 'ignore' and 'error_topic' failure strategies. Please check your configured failure strategy :: "
+                                + strategy);
         }
 
-    }
-
-    private static Queue getQueue(SolaceConnectorIncomingConfiguration ic) {
-        String queueType = ic.getConsumerQueueType();
-        switch (queueType) {
-            case "durable-non-exclusive":
-                return Queue.durableNonExclusiveQueue(ic.getConsumerQueueName().orElse(ic.getChannel()));
-            case "non-durable-exclusive":
-                return ic.getConsumerQueueName().map(Queue::nonDurableExclusiveQueue)
-                        .orElseGet(Queue::nonDurableExclusiveQueue);
-            default:
-            case "durable-exclusive":
-                return Queue.durableExclusiveQueue(ic.getConsumerQueueName().orElse(ic.getChannel()));
-
-        }
-    }
-
-    private static ReplayStrategy getGroupMessageIdReplayStrategy(SolaceConnectorIncomingConfiguration ic) {
-        String groupMessageId = ic.getConsumerQueueReplayReplicationGroupMessageId().orElseThrow();
-        return ReplayStrategy.replicationGroupMessageIdBased(InboundMessage.ReplicationGroupMessageId.of(groupMessageId));
-    }
-
-    private static ReplayStrategy getTimeBasedReplayStrategy(SolaceConnectorIncomingConfiguration ic) {
-        String zoneDateTime = ic.getConsumerQueueReplayTimebasedStartTime().orElseThrow();
-        return ReplayStrategy.timeBased(ZonedDateTime.parse(zoneDateTime));
     }
 
     public Flow.Publisher<? extends Message<?>> getStream() {
@@ -226,7 +178,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
 
     public void waitForUnAcknowledgedMessages() {
         try {
-            receiver.pause();
+            receiver.terminate(3000);
             SolaceLogging.log.infof("Waiting for incoming channel %s messages to be acknowledged", channel);
             if (!unacknowledgedMessageTracker.awaitEmpty(this.gracefulShutdownWaitTimeout, TimeUnit.MILLISECONDS)) {
                 SolaceLogging.log.infof("Timed out while waiting for the" +
@@ -256,7 +208,9 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
                 this.pollerThread.shutdownNow();
             }
         }
-        receiver.terminate(3000);
+        if (receiver.isRunning()) {
+            receiver.terminate(3000);
+        }
     }
 
     public void isStarted(HealthReport.HealthReportBuilder builder) {
@@ -282,7 +236,6 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
 
     @Override
     public void onStateChange(ReceiverState receiverState, ReceiverState receiverState1, long l) {
-        SolaceLogging.log.infof("Consumer state changed from %s to %s on channel %s", receiverState.name(),
-                receiverState1.name(), channel);
+
     }
 }

@@ -79,7 +79,7 @@ public class TracingPropogationTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", "quarkus/integration/test/replay/messages");
+                .with("mp.messaging.incoming.in.consumer.subscriptions", "quarkus/integration/test/replay/messages");
 
         // Run app that consumes messages
         MyConsumer app = runApplication(config, MyConsumer.class);
@@ -154,7 +154,7 @@ public class TracingPropogationTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", topic)
+                .with("mp.messaging.incoming.in.consumer.subscriptions", topic)
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.client.tracing-enabled", "true")
                 .with("mp.messaging.outgoing.out.producer.topic", processedTopic);

@@ -34,7 +34,11 @@ public class SolaceFail implements SolaceFailureHandler {
 
         SolaceLogging.log.messageSettled(channel, outcome.toString().toLowerCase(), reason.getMessage());
         return Uni.createFrom().voidItem()
-                .invoke(() -> ackSupport.settle(msg.getMessage(), outcome))
+                .invoke(() -> {
+                    if (ackSupport != null) {
+                        ackSupport.settle(msg.getMessage(), outcome);
+                    }
+                })
                 .runSubscriptionOn(msg::runOnMessageContext)
                 .subscribeAsCompletionStage();
     }

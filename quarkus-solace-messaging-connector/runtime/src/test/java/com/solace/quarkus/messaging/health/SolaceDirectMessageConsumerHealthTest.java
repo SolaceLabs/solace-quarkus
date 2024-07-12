@@ -13,7 +13,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.junit.jupiter.api.Test;
 
-import com.solace.messaging.publisher.PersistentMessagePublisher;
+import com.solace.messaging.publisher.DirectMessagePublisher;
 import com.solace.messaging.receiver.InboundMessage;
 import com.solace.messaging.resources.Topic;
 import com.solace.quarkus.messaging.base.WeldTestBase;
@@ -22,15 +22,13 @@ import com.solace.quarkus.messaging.incoming.SolaceInboundMessage;
 import io.smallrye.reactive.messaging.health.HealthReport;
 import io.smallrye.reactive.messaging.test.common.config.MapBasedConfig;
 
-public class SolaceConsumerHealthTest extends WeldTestBase {
+public class SolaceDirectMessageConsumerHealthTest extends WeldTestBase {
 
     @Test
     void solaceConsumerHealthCheck() {
         MapBasedConfig config = new MapBasedConfig()
+                .with("mp.messaging.incoming.in.client.type", "direct")
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
-                .with("mp.messaging.incoming.in.consumer.queue.name", queue)
-                .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
-                .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
                 .with("mp.messaging.incoming.in.consumer.subscriptions", topic);
 
         // Run app that consumes messages
@@ -39,7 +37,7 @@ public class SolaceConsumerHealthTest extends WeldTestBase {
         await().until(() -> isStarted() && isReady());
 
         // Produce messages
-        PersistentMessagePublisher publisher = messagingService.createPersistentMessagePublisherBuilder()
+        DirectMessagePublisher publisher = messagingService.createDirectMessagePublisherBuilder()
                 .build()
                 .start();
         Topic tp = Topic.of(topic);
@@ -67,10 +65,8 @@ public class SolaceConsumerHealthTest extends WeldTestBase {
     @Test
     void solaceConsumerLivenessCheck() {
         MapBasedConfig config = new MapBasedConfig()
+                .with("mp.messaging.incoming.in.client.type", "direct")
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
-                .with("mp.messaging.incoming.in.consumer.queue.name", queue)
-                .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
-                .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
                 .with("mp.messaging.incoming.in.consumer.subscriptions", topic);
 
         // Run app that consumes messages
@@ -79,7 +75,7 @@ public class SolaceConsumerHealthTest extends WeldTestBase {
         await().until(() -> isStarted() && isReady());
 
         // Produce messages
-        PersistentMessagePublisher publisher = messagingService.createPersistentMessagePublisherBuilder()
+        DirectMessagePublisher publisher = messagingService.createDirectMessagePublisherBuilder()
                 .build()
                 .start();
         Topic tp = Topic.of(topic);
