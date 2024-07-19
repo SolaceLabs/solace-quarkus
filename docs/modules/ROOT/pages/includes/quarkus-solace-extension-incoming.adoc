@@ -9,6 +9,43 @@ h|[[quarkus-solace_configuration_incoming]]link:#quarkus-solace_configuration_in
 h|Type
 h|Default
 
+a| [[quarkus-solace_quarkus.client.type.direct.back-pressure.strategy]]`link:#quarkus-solace_quarkus.client.type.direct.back-pressure.strategy[client.type.direct.back-pressure.strategy]`
+
+
+[.description]
+--
+The back-pressure strategy to be applied for direct message consumer.
+
+Supported values are `oldest`, `latest` & `elastic`.
+
+Refer to https://docs.solace.com/API/API-Developer-Guide-Java/Java-DM-Subscribe.htm#Configuring-Back-Pressure[Handling Back-Pressure When Subscribing to Direct Messages]
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_METRICS_ENABLED+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_METRICS_ENABLED+++`
+// endif::add-copy-button-to-env-var[]
+--|string
+| `elastic`
+
+a| [[quarkus-solace_quarkus.client.type.direct.back-pressure.buffer-capacity]]`link:#quarkus-solace_quarkus.client.type.direct.back-pressure.buffer-capacity[client.type.direct.back-pressure.buffer-capacity]`
+
+
+[.description]
+--
+
+It is possible for the client application to consume messages more quickly than the API can send them to the broker due to network congestion or connectivity issues. This delay can cause the internal buffer to accumulate messages until it reaches its capacity, preventing the API from storing any more messages.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_METRICS_ENABLED+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_METRICS_ENABLED+++`
+// endif::add-copy-button-to-env-var[]
+--|int
+| `1024`
+
 a| [[quarkus-solace_quarkus.consumer.queue.name]]`link:#quarkus-solace_quarkus.consumer.queue.name[consumer.queue.name]`
 
 
@@ -77,12 +114,16 @@ Whether to add configured subscriptions to queue. Will fail if permissions to co
 |`false`
 
 
-a| [[quarkus-solace_quarkus.consumer.queue.subscriptions]]`link:#quarkus-solace_quarkus.consumer.queue.subscriptions[consumer.queue.subscriptions]`
+a| [[quarkus-solace_quarkus.consumer.subscriptions]]`link:#quarkus-solace_quarkus.consumer.subscriptions[consumer.subscriptions]`
 
 
 [.description]
 --
-The comma separated list of subscriptions, the channel name if empty. This configuration is considered if `consumer.queue.add-additional-subscriptions` is set to true.
+The comma separated list of subscriptions, the channel name if empty.
+
+If `client.type` is `persistent` this configuration is considered only if `consumer.queue.add-additional-subscriptions` is set to true.
+
+If `client.type` is `direct` this is used by default.
 
 // ifdef::add-copy-button-to-env-var[]
 // Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_SHARED+++[]
@@ -91,7 +132,7 @@ The comma separated list of subscriptions, the channel name if empty. This confi
 // Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_SHARED+++`
 // endif::add-copy-button-to-env-var[]
 --|string
-|
+| required icon:exclamation-circle[title=Configuration property is required]
 
 
 a| [[quarkus-solace_quarkus.consumer.queue.selector-query]]`link:#quarkus-solace_quarkus.consumer.queue.selector-query[quarkus.consumer.queue.selector-query]`
@@ -158,15 +199,17 @@ The receiver replay replication group message id.
 // ifndef::add-copy-button-to-env-var[]
 // Environment variable: `+++QUARKUS_SOLACE_DEVSERVICES_CONTAINER_ENV+++`
 // endif::add-copy-button-to-env-var[]
---|`string`
+--|string
 |
 
-a| [[quarkus-solace_quarkus.consumer.queue.failure-strategy]]`link:#quarkus-solace_quarkus.consumer.queue.failure-strategy[consumer.queue.failure-strategy]`
+a| [[quarkus-solace_quarkus.consumer.failure-strategy]]`link:#quarkus-solace_quarkus.consumer.failure-strategy[consumer.failure-strategy]`
 
 
 [.description]
 --
 Specify the failure strategy to apply when a message consumed from Solace broker is nacked. Accepted values are `ignore` (default), `fail`, `discard`, `error_topic`.
+
+Following are the failure strategies supported when `client.type` is `persistent`.
 
 `ignore` - Mark the message as IGNORED, will continue processing with next message.
 
@@ -176,16 +219,22 @@ Specify the failure strategy to apply when a message consumed from Solace broker
 
 `error_topic` - Will publish the message to configured error topic, on success the message will be acknowledged in the queue.
 
+Following are the failure strategies supported when `client.type` is `direct`.
+
+`ignore` - Mark the message as IGNORED, will continue processing with next message.
+
+`error_topic` - Will publish the message to configured error topic, on success the message will be acknowledged in the queue.
+
 // ifdef::add-copy-button-to-env-var[]
 // Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE+++[]
 // endif::add-copy-button-to-env-var[]
 // ifndef::add-copy-button-to-env-var[]
 // Environment variable: `+++QUARKUS_SOLACE+++`
 // endif::add-copy-button-to-env-var[]
---|`string`
+--|string
 | ignore
 
-a| [[quarkus-solace_quarkus.consumer.queue.error.topic]]`link:#quarkus-solace_quarkus.consumer.queue.error.topic[consumer.queue.error.topic]`
+a| [[quarkus-solace_quarkus.consumer.error.topic]]`link:#quarkus-solace_quarkus.consumer.error.topic[consumer.error.topic]`
 
 
 [.description]
@@ -198,10 +247,10 @@ The error topic where message should be published in case of error.
 // ifndef::add-copy-button-to-env-var[]
 // Environment variable: `+++QUARKUS_SOLACE+++`
 // endif::add-copy-button-to-env-var[]
---|`string`
+--|string
 |
 
-a| [[quarkus-solace_quarkus.consumer.queue.error.message.dmq-eligible]]`link:#quarkus-solace_quarkus.consumer.queue.error.message.dmq-eligible[consumer.queue.error.message.dmq-eligible]`
+a| [[quarkus-solace_quarkus.consumer.error.message.dmq-eligible]]`link:#quarkus-solace_quarkus.consumer.error.message.dmq-eligible[consumer.error.message.dmq-eligible]`
 
 
 [.description]
@@ -214,10 +263,10 @@ Whether error message is eligible to move to dead message queue.
 // ifndef::add-copy-button-to-env-var[]
 // Environment variable: `+++QUARKUS_SOLACE+++`
 // endif::add-copy-button-to-env-var[]
---|`boolean`
+--|boolean
 | `false`
 
-a| [[quarkus-solace_quarkus.consumer.queue.error.message.ttl]]`link:#quarkus-solace_quarkus.consumer.queue.error.message.ttl[consumer.queue.error.message.ttl]`
+a| [[quarkus-solace_quarkus.consumer.error.message.ttl]]`link:#quarkus-solace_quarkus.consumer.error.message.ttl[consumer.error.message.ttl]`
 
 
 [.description]
@@ -230,10 +279,10 @@ TTL for Error message before moving to dead message queue.
 // ifndef::add-copy-button-to-env-var[]
 // Environment variable: `+++QUARKUS_SOLACE+++`
 // endif::add-copy-button-to-env-var[]
---|`long`
+--|long
 | `null`
 
-a| [[quarkus-solace_quarkus.consumer.queue.error.message.max-delivery-attempts]]`link:#quarkus-solace_quarkus.consumer.queue.error.message.max-delivery-attempts[consumer.queue.error.message.max-delivery-attempts]`
+a| [[quarkus-solace_quarkus.consumer.error.message.max-delivery-attempts]]`link:#quarkus-solace_quarkus.consumer.error.message.max-delivery-attempts[consumer.error.message.max-delivery-attempts]`
 
 
 [.description]
@@ -246,7 +295,7 @@ Maximum number of attempts to send a failed message to the error topic in case o
 // ifndef::add-copy-button-to-env-var[]
 // Environment variable: `+++QUARKUS_SOLACE+++`
 // endif::add-copy-button-to-env-var[]
---|`int`
+--|int
 | `3`
 
 a| [[quarkus-solace_quarkus.consumer.queue.supports-nacks]]`link:#quarkus-solace_quarkus.consumer.queue.supports-nacks[consumer.queue.supports-nacks]`
@@ -262,7 +311,7 @@ Whether to enable negative acknowledgments on failed messages. Nacks are support
 // ifndef::add-copy-button-to-env-var[]
 // Environment variable: `+++QUARKUS_SOLACE+++`
 // endif::add-copy-button-to-env-var[]
---|`boolean`
+--|boolean
 | `false`
 
 |===

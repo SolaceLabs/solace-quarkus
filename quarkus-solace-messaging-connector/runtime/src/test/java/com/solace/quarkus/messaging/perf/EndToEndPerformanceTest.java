@@ -42,7 +42,7 @@ public class EndToEndPerformanceTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", topic)
+                .with("mp.messaging.incoming.in.consumer.subscriptions", topic)
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.producer.topic", processedTopic);
 
@@ -81,7 +81,7 @@ public class EndToEndPerformanceTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", topic)
+                .with("mp.messaging.incoming.in.consumer.subscriptions", topic)
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.producer.topic", processedTopic)
                 .with("mp.messaging.outgoing.out.producer.waitForPublishReceipt", false);
@@ -122,7 +122,7 @@ public class EndToEndPerformanceTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", topic)
+                .with("mp.messaging.incoming.in.consumer.subscriptions", topic)
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.producer.topic", processedTopic)
                 .with("mp.messaging.outgoing.out.producer.back-pressure.strategy", "elastic");
@@ -163,7 +163,7 @@ public class EndToEndPerformanceTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", topic)
+                .with("mp.messaging.incoming.in.consumer.subscriptions", topic)
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.producer.topic", processedTopic)
                 .with("mp.messaging.outgoing.out.producer.back-pressure.strategy", "elastic")
@@ -219,7 +219,7 @@ public class EndToEndPerformanceTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", topic)
+                .with("mp.messaging.incoming.in.consumer.subscriptions", topic)
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.producer.topic", processedTopic);
 
@@ -258,7 +258,7 @@ public class EndToEndPerformanceTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", topic)
+                .with("mp.messaging.incoming.in.consumer.subscriptions", topic)
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.producer.topic", processedTopic)
                 .with("mp.messaging.outgoing.out.producer.waitForPublishReceipt", false);
@@ -298,7 +298,7 @@ public class EndToEndPerformanceTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", topic)
+                .with("mp.messaging.incoming.in.consumer.subscriptions", topic)
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.producer.topic", processedTopic)
                 .with("mp.messaging.outgoing.out.producer.back-pressure.strategy", "elastic");
@@ -338,7 +338,7 @@ public class EndToEndPerformanceTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", topic)
+                .with("mp.messaging.incoming.in.consumer.subscriptions", topic)
                 .with("mp.messaging.outgoing.out.connector", "quarkus-solace")
                 .with("mp.messaging.outgoing.out.producer.topic", processedTopic)
                 .with("mp.messaging.outgoing.out.producer.back-pressure.strategy", "elastic")

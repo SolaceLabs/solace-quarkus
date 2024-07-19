@@ -132,7 +132,7 @@ public class SolaceOAuthTest {
                 .with("consumer.queue.name", "queue-" + UUID.randomUUID().getMostSignificantBits())
                 .with("consumer.queue.add-additional-subscriptions", true)
                 .with("consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("consumer.queue.subscriptions", SolaceContainer.INTEGRATION_TEST_QUEUE_SUBSCRIPTION);
+                .with("consumer.subscriptions", SolaceContainer.INTEGRATION_TEST_QUEUE_SUBSCRIPTION);
 
         MessagingService messagingService = getMessagingService();
         SolaceIncomingChannel solaceIncomingChannel = new SolaceIncomingChannel(Vertx.vertx(),

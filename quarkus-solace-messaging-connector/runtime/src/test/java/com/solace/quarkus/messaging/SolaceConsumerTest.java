@@ -51,7 +51,7 @@ public class SolaceConsumerTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.name", queue)
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", "quarkus/integration/test/replay/messages");
+                .with("mp.messaging.incoming.in.consumer.subscriptions", "quarkus/integration/test/replay/messages");
 
         // Run app that consumes messages
         MyConsumer app = runApplication(config, MyConsumer.class);
@@ -80,7 +80,7 @@ public class SolaceConsumerTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", "quarkus/integration/test/replay/messages")
+                .with("mp.messaging.incoming.in.consumer.subscriptions", "quarkus/integration/test/replay/messages")
                 .with("mp.messaging.incoming.in.consumer.queue.replay.strategy", "all-messages");
 
         // Run app that consumes messages
@@ -100,7 +100,7 @@ public class SolaceConsumerTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
                 .with("mp.messaging.incoming.in.consumer.queue.selector-query", "id = '1'")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", topic);
+                .with("mp.messaging.incoming.in.consumer.subscriptions", topic);
 
         // Run app that consumes messages
         MyConsumer app = runApplication(config, MyConsumer.class);
@@ -128,10 +128,10 @@ public class SolaceConsumerTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_QUEUE_NAME)
                 .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
-                .with("mp.messaging.incoming.in.consumer.queue.failure-strategy", "error_topic")
-                .with("mp.messaging.incoming.in.consumer.queue.error.topic",
+                .with("mp.messaging.incoming.in.consumer.failure-strategy", "error_topic")
+                .with("mp.messaging.incoming.in.consumer.error.topic",
                         SolaceContainer.INTEGRATION_TEST_ERROR_QUEUE_SUBSCRIPTION)
-                .with("mp.messaging.incoming.in.consumer.queue.error.message.ttl", 1000)
+                .with("mp.messaging.incoming.in.consumer.error.message.ttl", 1000)
                 .with("mp.messaging.incoming.error-in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.error-in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_ERROR_QUEUE_NAME)
                 .with("mp.messaging.incoming.error-in.consumer.queue.type", "durable-exclusive");
@@ -163,7 +163,7 @@ public class SolaceConsumerTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_QUEUE_NAME)
                 .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
                 .with("mp.messaging.incoming.in.consumer.queue.supports-nacks", "true")
-                .with("mp.messaging.incoming.in.consumer.queue.failure-strategy", "discard")
+                .with("mp.messaging.incoming.in.consumer.failure-strategy", "discard")
                 .with("mp.messaging.incoming.dmq-in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.dmq-in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_DMQ_NAME)
                 .with("mp.messaging.incoming.dmq-in.consumer.queue.type", "durable-exclusive");
@@ -266,10 +266,10 @@ public class SolaceConsumerTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_QUEUE_NAME)
                 .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
-                .with("mp.messaging.incoming.in.consumer.queue.failure-strategy", "error_topic")
-                .with("mp.messaging.incoming.in.consumer.queue.error.topic",
+                .with("mp.messaging.incoming.in.consumer.failure-strategy", "error_topic")
+                .with("mp.messaging.incoming.in.consumer.error.topic",
                         "publish/deny")
-                .with("mp.messaging.incoming.in.consumer.queue.error.message.max-delivery-attempts", 0)
+                .with("mp.messaging.incoming.in.consumer.error.message.max-delivery-attempts", 0)
                 .with("mp.messaging.incoming.error-in.connector", "quarkus-solace")
                 .with("mp.messaging.incoming.error-in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_ERROR_QUEUE_NAME)
                 .with("mp.messaging.incoming.error-in.consumer.queue.type", "durable-exclusive");
@@ -300,7 +300,7 @@ public class SolaceConsumerTest extends WeldTestBase {
                 .with("consumer.queue.name", queue)
                 .with("consumer.queue.add-additional-subscriptions", true)
                 .with("consumer.queue.missing-resource-creation-strategy", "create-on-start")
-                .with("consumer.queue.subscriptions", topic);
+                .with("consumer.subscriptions", topic);
 
         // Initialize incoming channel to consumes messages
         SolaceIncomingChannel solaceIncomingChannel = new SolaceIncomingChannel(Vertx.vertx(),
@@ -346,7 +346,7 @@ public class SolaceConsumerTest extends WeldTestBase {
                 .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
                 .with("mp.messaging.incoming.in.consumer.queue.name", SolaceContainer.INTEGRATION_TEST_QUEUE_NAME)
                 .with("mp.messaging.incoming.in.consumer.queue.type", "durable-exclusive")
-                .with("mp.messaging.incoming.in.consumer.queue.subscriptions", topic);
+                .with("mp.messaging.incoming.in.consumer.subscriptions", topic);
 
         Exception exception = assertThrows(Exception.class, () -> {
             // Run app that consumes messages

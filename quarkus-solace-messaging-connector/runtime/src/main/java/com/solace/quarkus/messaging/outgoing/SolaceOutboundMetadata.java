@@ -16,6 +16,7 @@ public class SolaceOutboundMetadata {
     private final String dynamicDestination;
 
     private final String partitionKey;
+    private final String correlationId;
 
     public static PubSubOutboundMetadataBuilder builder() {
         return new PubSubOutboundMetadataBuilder();
@@ -29,7 +30,7 @@ public class SolaceOutboundMetadata {
             String applicationMessageType,
             Long timeToLive,
             String applicationMessageId,
-            Integer classOfService, String dynamicDestination, String partitionKey) {
+            Integer classOfService, String dynamicDestination, String partitionKey, String correlationId) {
         this.httpContentHeaders = httpContentHeaders;
         this.expiration = expiration;
         this.priority = priority;
@@ -41,6 +42,7 @@ public class SolaceOutboundMetadata {
         this.classOfService = classOfService;
         this.dynamicDestination = dynamicDestination;
         this.partitionKey = partitionKey;
+        this.correlationId = correlationId;
     }
 
     public Map<String, String> getHttpContentHeaders() {
@@ -87,6 +89,10 @@ public class SolaceOutboundMetadata {
         return partitionKey;
     }
 
+    public String getCorrelationId() {
+        return correlationId;
+    }
+
     public static class PubSubOutboundMetadataBuilder {
         private Map<String, String> httpContentHeaders;
         private Long expiration;
@@ -100,6 +106,7 @@ public class SolaceOutboundMetadata {
         private String dynamicDestination;
 
         private String partitionKey;
+        private String correlationId;
 
         public PubSubOutboundMetadataBuilder setHttpContentHeaders(Map<String, String> httpContentHeader) {
             this.httpContentHeaders = httpContentHeaders;
@@ -156,9 +163,15 @@ public class SolaceOutboundMetadata {
             return this;
         }
 
+        public PubSubOutboundMetadataBuilder setCorrelationId(String correlationId) {
+            this.correlationId = correlationId;
+            return this;
+        }
+
         public SolaceOutboundMetadata createPubSubOutboundMetadata() {
             return new SolaceOutboundMetadata(httpContentHeaders, expiration, priority, senderId, properties,
-                    applicationMessageType, timeToLive, applicationMessageId, classOfService, dynamicDestination, partitionKey);
+                    applicationMessageType, timeToLive, applicationMessageId, classOfService, dynamicDestination, partitionKey,
+                    correlationId);
         }
     }
 }

@@ -13,29 +13,27 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.junit.jupiter.api.Test;
 
-import com.solace.messaging.publisher.PersistentMessagePublisher;
+import com.solace.messaging.publisher.DirectMessagePublisher;
 import com.solace.messaging.resources.Topic;
 import com.solace.quarkus.messaging.base.WeldTestBase;
 import com.solace.quarkus.messaging.incoming.SolaceInboundMessage;
 
 import io.smallrye.reactive.messaging.test.common.config.MapBasedConfig;
 
-public class SolaceConsumerPerformanceTest extends WeldTestBase {
+public class SolaceDirectMessageConsumerPerformanceTest extends WeldTestBase {
     private static final int COUNT = 100000;
     private static final int TIMEOUT_IN_SECONDS = 400;
 
     @Test
     public void solaceConsumerPerformanceTest() {
         // Produce messages
-        PersistentMessagePublisher publisher = messagingService.createPersistentMessagePublisherBuilder()
+        DirectMessagePublisher publisher = messagingService.createDirectMessagePublisherBuilder()
                 .build()
                 .start();
 
         MapBasedConfig config = commonConfig()
+                .with("mp.messaging.incoming.in.client.type", "direct")
                 .with("mp.messaging.incoming.in.connector", "quarkus-solace")
-                .with("mp.messaging.incoming.in.consumer.queue.name", queue)
-                .with("mp.messaging.incoming.in.consumer.queue.add-additional-subscriptions", "true")
-                .with("mp.messaging.incoming.in.consumer.queue.missing-resource-creation-strategy", "create-on-start")
                 .with("mp.messaging.incoming.in.consumer.subscriptions", topic);
 
         // Run app that consumes messages

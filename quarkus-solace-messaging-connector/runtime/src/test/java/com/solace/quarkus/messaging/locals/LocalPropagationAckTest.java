@@ -30,7 +30,7 @@ public class LocalPropagationAckTest extends WeldTestBase {
     private MapBasedConfig dataconfig() {
         return commonConfig()
                 .with("mp.messaging.incoming.data.connector", SolaceConnector.CONNECTOR_NAME)
-                .with("mp.messaging.incoming.data.consumer.queue.subscriptions", topic)
+                .with("mp.messaging.incoming.data.consumer.subscriptions", topic)
                 .with("mp.messaging.incoming.data.consumer.queue.add-additional-subscriptions", "true")
                 .with("mp.messaging.incoming.data.consumer.queue.missing-resource-creation-strategy", "create-on-start")
                 .with("mp.messaging.incoming.data.consumer.queue.name", topic);

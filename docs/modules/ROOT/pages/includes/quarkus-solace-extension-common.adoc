@@ -9,6 +9,26 @@ h|[[quarkus-solace_configuration_common]]link:#quarkus-solace_configuration_comm
 h|Type
 h|Default
 
+a| [[quarkus-solace_quarkus.client.type]]`link:#quarkus-solace_quarkus.client.type[client.type]`
+
+
+[.description]
+--
+The type of client when establishing connection to Solace. Solace supports two types of client Direct and Persistent.
+
+Use Direct client where message loss can be tolerated. The publisher publishes the event and the broker doesn't send any acknowledgement back to publisher for guaranteed delivery.
+
+Use Persistent client where message loss cannot be tolerated. The publisher publishes the event and the broker sends an acknowledgement that message is guaranteed for delivery.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_METRICS_ENABLED+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_METRICS_ENABLED+++`
+// endif::add-copy-button-to-env-var[]
+--|string
+| `persistent`
+
 a| [[quarkus-solace_quarkus.client.lazy.start]]`link:#quarkus-solace_quarkus.client.lazy.start[client.lazy.start]`
 
 

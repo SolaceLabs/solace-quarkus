@@ -14,35 +14,22 @@ import com.solace.quarkus.messaging.incoming.SolaceInboundMessage;
 public class SolaceErrorTopic implements SolaceFailureHandler {
     private final String channel;
     private final AcknowledgementSupport ackSupport;
-    private final MessagingService solace;
 
     private final SolaceErrorTopicPublisherHandler solaceErrorTopicPublisherHandler;
-    private long maxDeliveryAttempts;
-    private String errorTopic;
-    private boolean dmqEligible;
-    private Long timeToLive;
+    private final long maxDeliveryAttempts;
+    private final String errorTopic;
+    private final boolean dmqEligible;
+    private final Long timeToLive;
 
-    public SolaceErrorTopic(String channel, AcknowledgementSupport ackSupport, MessagingService solace) {
+    public SolaceErrorTopic(String channel, String errorTopic, boolean dmqEligible, Long timeToLive, long maxDeliveryAttempts,
+            AcknowledgementSupport ackSupport, MessagingService solace) {
         this.channel = channel;
-        this.ackSupport = ackSupport;
-        this.solace = solace;
-        this.solaceErrorTopicPublisherHandler = new SolaceErrorTopicPublisherHandler(solace);
-    }
-
-    public void setMaxDeliveryAttempts(long maxDeliveryAttempts) {
-        this.maxDeliveryAttempts = maxDeliveryAttempts;
-    }
-
-    public void setErrorTopic(String errorTopic) {
         this.errorTopic = errorTopic;
-    }
-
-    public void setDmqEligible(boolean dmqEligible) {
         this.dmqEligible = dmqEligible;
-    }
-
-    public void setTimeToLive(Long timeToLive) {
         this.timeToLive = timeToLive;
+        this.maxDeliveryAttempts = maxDeliveryAttempts;
+        this.ackSupport = ackSupport;
+        this.solaceErrorTopicPublisherHandler = new SolaceErrorTopicPublisherHandler(solace);
     }
 
     @Override
@@ -54,7 +41,9 @@ public class SolaceErrorTopic implements SolaceFailureHandler {
                     SolaceLogging.log.messageSettled(channel,
                             MessageAcknowledgementConfiguration.Outcome.ACCEPTED.toString().toLowerCase(),
                             "Message is published to error topic and acknowledged on queue.");
-                    ackSupport.settle(msg.getMessage(), MessageAcknowledgementConfiguration.Outcome.ACCEPTED);
+                    if (ackSupport != null) {
+                        ackSupport.settle(msg.getMessage(), MessageAcknowledgementConfiguration.Outcome.ACCEPTED);
+                    }
                 })
                 .replaceWithVoid()
                 .onFailure().invoke(t -> SolaceLogging.log.unsuccessfulToTopic(errorTopic, channel, t))

@@ -2,24 +2,19 @@ package com.solace.quarkus.messaging.outgoing;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Flow;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.eclipse.microprofile.reactive.messaging.Message;
 
+import com.solace.messaging.DirectMessagePublisherBuilder;
 import com.solace.messaging.MessagingService;
-import com.solace.messaging.PersistentMessagePublisherBuilder;
 import com.solace.messaging.PubSubPlusClientException;
 import com.solace.messaging.config.SolaceConstants;
 import com.solace.messaging.config.SolaceProperties;
-import com.solace.messaging.publisher.OutboundMessage;
-import com.solace.messaging.publisher.OutboundMessageBuilder;
-import com.solace.messaging.publisher.PersistentMessagePublisher;
-import com.solace.messaging.publisher.PersistentMessagePublisher.PublishReceipt;
-import com.solace.messaging.publisher.PublisherHealthCheck;
+import com.solace.messaging.publisher.*;
 import com.solace.messaging.resources.Topic;
 import com.solace.quarkus.messaging.SolaceConnectorOutgoingConfiguration;
 import com.solace.quarkus.messaging.i18n.SolaceLogging;
@@ -28,17 +23,15 @@ import com.solace.quarkus.messaging.tracing.SolaceTrace;
 
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.smallrye.mutiny.Uni;
-import io.smallrye.mutiny.subscription.UniEmitter;
-import io.smallrye.reactive.messaging.OutgoingMessageMetadata;
 import io.smallrye.reactive.messaging.health.HealthReport;
 import io.smallrye.reactive.messaging.providers.helpers.MultiUtils;
 import io.vertx.core.json.Json;
 import io.vertx.mutiny.core.Vertx;
 
-public class SolaceOutgoingChannel
-        implements PersistentMessagePublisher.MessagePublishReceiptListener, PublisherHealthCheck.PublisherReadinessListener {
+public class SolaceDirectMessageOutgoingChannel
+        implements PublisherHealthCheck.PublisherReadinessListener {
 
-    private final PersistentMessagePublisher publisher;
+    private final DirectMessagePublisher publisher;
     private final String channel;
     private final Flow.Subscriber<? extends Message<?>> subscriber;
     private final Topic topic;
@@ -48,16 +41,15 @@ public class SolaceOutgoingChannel
     private final AtomicBoolean alive = new AtomicBoolean(true);
     private final List<Throwable> failures = new ArrayList<>();
     private final SolaceOpenTelemetryInstrumenter solaceOpenTelemetryInstrumenter;
+    private final MessagingService solace;
     private volatile boolean isPublisherReady = true;
-    private volatile MessagingService solace;
-
     // Assuming we won't ever exceed the limit of an unsigned long...
     private final OutgoingMessagesUnsignedCounterBarrier publishedMessagesTracker = new OutgoingMessagesUnsignedCounterBarrier();
 
-    public SolaceOutgoingChannel(Vertx vertx, SolaceConnectorOutgoingConfiguration oc, MessagingService solace) {
+    public SolaceDirectMessageOutgoingChannel(Vertx vertx, SolaceConnectorOutgoingConfiguration oc, MessagingService solace) {
         this.solace = solace;
         this.channel = oc.getChannel();
-        PersistentMessagePublisherBuilder builder = solace.createPersistentMessagePublisherBuilder();
+        DirectMessagePublisherBuilder builder = solace.createDirectMessagePublisherBuilder();
         switch (oc.getProducerBackPressureStrategy()) {
             case "wait":
                 builder.onBackPressureWait(oc.getProducerBackPressureBufferCapacity());
@@ -71,12 +63,7 @@ public class SolaceOutgoingChannel
         }
         this.gracefulShutdown = oc.getClientGracefulShutdown();
         this.gracefulShutdownWaitTimeout = oc.getClientGracefulShutdownWaitTimeout();
-        oc.getProducerDeliveryAckTimeout().ifPresent(builder::withDeliveryAckTimeout);
-        oc.getProducerDeliveryAckWindowSize().ifPresent(builder::withDeliveryAckWindowSize);
         this.publisher = builder.build();
-        if (oc.getProducerWaitForPublishReceipt()) {
-            publisher.setMessagePublishReceiptListener(this);
-        }
         boolean lazyStart = oc.getClientLazyStart();
         this.topic = Topic.of(oc.getProducerTopic().orElse(this.channel));
         if (oc.getClientTracingEnabled()) {
@@ -85,7 +72,7 @@ public class SolaceOutgoingChannel
             solaceOpenTelemetryInstrumenter = null;
         }
         this.processor = new SenderProcessor(oc.getProducerMaxInflightMessages(), oc.getProducerWaitForPublishReceipt(),
-                m -> sendMessage(solace, m, oc.getProducerWaitForPublishReceipt(), oc.getClientTracingEnabled()).onFailure()
+                m -> sendMessage(solace, m, oc.getClientTracingEnabled()).onFailure()
                         .invoke(this::reportFailure));
         this.subscriber = MultiUtils.via(processor, multi -> multi.plug(
                 m -> lazyStart ? m.onSubscription().call(() -> Uni.createFrom().completionStage(publisher.startAsync())) : m));
@@ -93,24 +80,19 @@ public class SolaceOutgoingChannel
             this.publisher.start();
         }
 
-        this.publisher.setPublisherReadinessListener(new PublisherHealthCheck.PublisherReadinessListener() {
-            @Override
-            public void ready() {
-                isPublisherReady = true;
-            }
+        this.publisher.setPublisherReadinessListener(() -> isPublisherReady = true);
+        this.publisher.setPublishFailureListener(failedPublishEvent -> {
+            SolaceLogging.log.error("Failed to publish direct message");
+            reportFailure(failedPublishEvent.getException());
         });
     }
 
-    private Uni<Void> sendMessage(MessagingService solace, Message<?> m, boolean waitForPublishReceipt,
-            boolean isTracingEnabled) {
+    private Uni<Void> sendMessage(MessagingService solace, Message<?> m, boolean isTracingEnabled) {
 
         // TODO - Use isPublisherReady to check if publisher is in ready state before publishing. This is required when back-pressure is set to reject. We need to block this call till isPublisherReady is true
-        return publishMessage(publisher, m, solace.messageBuilder(), waitForPublishReceipt, isTracingEnabled)
+        return publishMessage(publisher, m, solace.messageBuilder(), isTracingEnabled)
                 .onItem().transformToUni(receipt -> {
                     alive.set(true);
-                    if (receipt != null) {
-                        OutgoingMessageMetadata.setResultOnMessage(m, receipt);
-                    }
                     return Uni.createFrom().completionStage(m.getAck());
                 })
                 .onFailure().recoverWithUni(t -> {
@@ -128,8 +110,8 @@ public class SolaceOutgoingChannel
         failures.add(throwable);
     }
 
-    private Uni<PublishReceipt> publishMessage(PersistentMessagePublisher publisher, Message<?> m,
-            OutboundMessageBuilder msgBuilder, boolean waitForPublishReceipt, boolean isTracingEnabled) {
+    private Uni<Object> publishMessage(DirectMessagePublisher publisher, Message<?> m,
+            OutboundMessageBuilder msgBuilder, boolean isTracingEnabled) {
         publishedMessagesTracker.increment();
         AtomicReference<Topic> topic = new AtomicReference<>(this.topic);
         OutboundMessage outboundMessage;
@@ -207,17 +189,13 @@ public class SolaceOutgoingChannel
             solaceOpenTelemetryInstrumenter.traceOutgoing(m, solaceTrace);
         }
 
-        return Uni.createFrom().<PublishReceipt> emitter(e -> {
+        return Uni.createFrom().<Object> emitter(e -> {
             boolean exitExceptionally = false;
             try {
                 if (isPublisherReady) {
-                    if (waitForPublishReceipt) {
-                        publisher.publish(outboundMessage, topic.get(), e);
-                    } else {
-                        publisher.publish(outboundMessage, topic.get());
-                        e.complete(null);
-                        publishedMessagesTracker.decrement();
-                    }
+                    publisher.publish(outboundMessage, topic.get());
+                    publishedMessagesTracker.decrement();
+                    e.complete(null);
                 }
             } catch (PubSubPlusClientException.PublisherOverflowException publisherOverflowException) {
                 isPublisherReady = false;
@@ -261,18 +239,6 @@ public class SolaceOutgoingChannel
         publisher.terminate(5000);
     }
 
-    @Override
-    public void onPublishReceipt(PublishReceipt publishReceipt) {
-        UniEmitter<PublishReceipt> uniEmitter = (UniEmitter<PublishReceipt>) publishReceipt.getUserContext();
-        PubSubPlusClientException exception = publishReceipt.getException();
-        if (exception != null) {
-            uniEmitter.fail(exception);
-        } else {
-            publishedMessagesTracker.decrement();
-            uniEmitter.complete(publishReceipt);
-        }
-    }
-
     public void isStarted(HealthReport.HealthReportBuilder builder) {
         builder.add(channel, solace.isConnected());
     }
@@ -287,7 +253,6 @@ public class SolaceOutgoingChannel
             synchronized (this) {
                 reportedFailures = new ArrayList<>(failures);
             }
-            System.out.println(reportedFailures);
             builder.add(channel, solace.isConnected() && alive.get(),
                     reportedFailures.stream().map(Throwable::getMessage).collect(Collectors.joining()));
         } else {

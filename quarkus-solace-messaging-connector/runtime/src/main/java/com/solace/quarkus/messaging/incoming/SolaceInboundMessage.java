@@ -14,6 +14,7 @@ import com.solace.quarkus.messaging.fault.SolaceFailureHandler;
 import com.solace.quarkus.messaging.i18n.SolaceLogging;
 
 import io.netty.handler.codec.http.HttpHeaderValues;
+import io.smallrye.mutiny.Uni;
 import io.smallrye.reactive.messaging.providers.MetadataInjectableMessage;
 import io.smallrye.reactive.messaging.providers.locals.ContextAwareMessage;
 import io.vertx.core.buffer.Buffer;
@@ -97,7 +98,11 @@ public class SolaceInboundMessage<T> implements ContextAwareMessage<T>, Metadata
     @Override
     public CompletionStage<Void> ack() {
         this.unacknowledgedMessageTracker.decrement();
-        return ackHandler.handle(this);
+        if (this.ackHandler != null) {
+            return ackHandler.handle(this);
+        }
+
+        return Uni.createFrom().voidItem().subscribeAsCompletionStage();
     }
 
     @Override

@@ -9,6 +9,24 @@ h|[[quarkus-solace_configuration_outgoing]]link:#quarkus-solace_configuration_ou
 h|Type
 h|Default
 
+a| [[quarkus-solace_quarkus.client.type.direct.waitForPublishReceipt.timeout]]`link:#quarkus-solace_quarkus.client.type.direct.waitForPublishReceipt.timeout[client.type.direct.waitForPublishReceipt.timeout]`
+
+
+[.description]
+--
+In case of direct messaging broker will not send any acknowledgement for published messages.
+
+We can configure a timeout in milliseconds to check for any publish failures. If no failed event is received during this timeout published message is assumed to be successful.
+
+// ifdef::add-copy-button-to-env-var[]
+// Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_METRICS_ENABLED+++[]
+// endif::add-copy-button-to-env-var[]
+// ifndef::add-copy-button-to-env-var[]
+// Environment variable: `+++QUARKUS_SOLACE_METRICS_ENABLED+++`
+// endif::add-copy-button-to-env-var[]
+--|long
+| `30`
+
 a| [[quarkus-solace_quarkus.producer.topic]]`link:#quarkus-solace_quarkus.producer.topic[producer.topic]`
 
 
@@ -48,7 +66,9 @@ a| [[quarkus-solace_quarkus.producer.waitForPublishReceipt]]`link:#quarkus-solac
 
 [.description]
 --
-Whether the client waits to receive the publish receipt from Solace broker before acknowledging the message.
+Whether the client waits to receive publish receipt from Solace broker before sending acknowledgment. This property is considered only when `client.type` is `persistent`.
+
+In case of `client.type` is `direct` publish receipt is not sent by broker and extension returns success acknowledgment by default. However, the extension will log if there is any failure when publishing the event.
 
 // ifdef::add-copy-button-to-env-var[]
 // Environment variable: env_var_with_copy_button:+++QUARKUS_SOLACE_DEVSERVICES_ENABLED+++[]

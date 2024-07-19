@@ -170,8 +170,6 @@ quarkus.solace.authentication.basic.password=test
 
 In similar way other authentication mechanisms can be enabled
 
-CAUTION: In the current version we don't recommend to use OAuth as it in evolving phase.
-
 
 [[configuring-quarkus-solace-messaging-connector]]
 == Configuring Quarkus Solace Messaging Connector
@@ -184,7 +182,9 @@ Reactive Messaging framework supports different messaging backends it employs a 
 
 * Channels are connected to message backends using connectors. Connectors are configured to map incoming messages to a specific channel (consumed by the application) and collect outgoing messages sent to a specific channel. Each connector is dedicated to a specific messaging technology. For example, the connector dealing with Solace is named `quarkus-solace`.
 
-A minimal configuration for the Solace connector with an incoming channel looks like the following:
+The extension supports two types of messaging client `direct` and `persistent`. By default `persistent` client is enabled.
+
+A minimal configuration for the Solace connector with an incoming channel and `persistent` client looks like the following:
 
 The following lines of configuration assumes that a exclusive queue is already provisioned on the broker
 [source,properties]
@@ -210,7 +210,21 @@ quarkus.solace.authentication.basic.password=basic
 mp.messaging.incoming.temperatures.connector=quarkus-solace
 mp.messaging.incoming.temperatures.consumer.queue.missing-resource-creation-strategy=create-on-start
 mp.messaging.incoming.temperatures.consumer.queue.add-additional-subscriptions=true
-mp.messaging.incoming.temperatures.consumer.queue.subscriptions=hello/foobar
+mp.messaging.incoming.temperatures.consumer.subscriptions=hello/foobar
+----
+
+A minimal configuration for the Solace connector with an incoming channel and `direct` client looks like the following:
+
+[source,properties]
+----
+quarkus.solace.host=tcp://localhost:55555
+quarkus.solace.vpn=default
+quarkus.solace.authentication.basic.username=basic
+quarkus.solace.authentication.basic.password=basic
+
+mp.messaging.incoming.temperatures.client.type=direct
+mp.messaging.incoming.temperatures.connector=quarkus-solace
+mp.messaging.incoming.temperatures.consumer.subscriptions=sensor/temperatures
 ----
 
 1. When running in dev mode or tests dev services will automatically start a Solace PubSub+ broker and if broker configuration details are not provided the extension automatically picks up the details of broker started by dev services.
@@ -257,7 +271,8 @@ __SolaceInboundMessage__ This is a wrapper to incoming Inbound Message from Sola
 
 [source,java]
 ----
-import com.solace.messaging.receiver.InboundMessage;@ApplicationScoped
+import com.solace.messaging.receiver.InboundMessage;
+@ApplicationScoped
 public class TemperaturesConsumer {
     @Incoming("temperatures")
     public void consume(InboundMessage inboundMessage) {
@@ -270,7 +285,9 @@ public class TemperaturesConsumer {
 [[acknowledgement-handling]]
 == Acknowledgment Handling
 
-By default, acknowledgement strategy is set to client acknowledgement. This gives greater control over acknowledgement and ensures that messages are acknowledged only after successful processing.
+By default, for `persistent` client acknowledgement strategy is set to client acknowledgement. This gives greater control over acknowledgement and ensures that messages are acknowledged only after successful processing.
+
+In case of `direct` client no acknowledgement is sent to the broker.
 
 [source,java]
 ----
@@ -291,7 +308,7 @@ public class TemperaturesConsumer {
 [[failure-strategies]]
 == Failure Strategies
 
-If a message is nacked, a failure strategy is applied. Refer to <<extension-incoming-configuration-reference>><<quarkus-solace_quarkus.consumer.queue.failure-strategy>>. The default strategy is set to `ignore` and move on to next message. Following are the strategies supported by Quarkus Solace Messaging Connector extension.
+If a message is nacked, a failure strategy is applied. Refer to <<extension-incoming-configuration-reference>><<quarkus-solace_quarkus.consumer.failure-strategy>>. The default strategy is set to `ignore` and move on to next message. Following are the strategies supported by Quarkus Solace Messaging Connector extension.
 
 `ignore` - Mark the message as IGNORED, will continue processing with next message. It TTL and DMQ are configured on the queue message will be moved to DMQ once TTL is reached. If no DMQ is configured but TTL is set message will be lost.
 
@@ -304,7 +321,7 @@ If a message is nacked, a failure strategy is applied. Refer to <<extension-inco
 [[sending-messages-to-solace]]
 == Sending messages to Solace
 
-Outgoing channel configuration to publish messages to Solace.
+Outgoing channel configuration to publish `persistent` messages to Solace.
 
 [source,properties]
 ----
@@ -313,6 +330,20 @@ quarkus.solace.vpn=default
 quarkus.solace.authentication.basic.username=basic
 quarkus.solace.authentication.basic.password=basic
 
+mp.messaging.outgoing.temperatures-out.connector=quarkus-solace
+mp.messaging.outgoing.temperatures-out.producer.topic=temperatures
+----
+
+Outgoing channel configuration to publish `direct` messages to Solace.
+
+[source,properties]
+----
+quarkus.solace.host=tcp://localhost:55555
+quarkus.solace.vpn=default
+quarkus.solace.authentication.basic.username=basic
+quarkus.solace.authentication.basic.password=basic
+
+mp.messaging.outgoing.temperatures-out.client.type=direct
 mp.messaging.outgoing.temperatures-out.connector=quarkus-solace
 mp.messaging.outgoing.temperatures-out.producer.topic=temperatures
 ----
@@ -432,6 +463,14 @@ public class PublisherResource {
     }
 }
 ----
+
+== Producer Acknowledgement
+
+Producer can return successful acknowledgement when <<quarkus-solace_quarkus.producer.waitForPublishReceipt>> is enabled.
+
+This property is considered only when <<quarkus-solace_quarkus.client.type>> is set to `persistent`. The connector will wait for response from broker and will return success or failed acknowledgement.
+
+In case of <<quarkus-solace_quarkus.client.type>> is set to `direct` this property is ignored as broker will not send any response. By default, success acknowledgement is returned and any failures during publish are logged as exceptions.
 
 == Producer Back-Pressure strategies
 
