@@ -10,7 +10,7 @@ h|[[quarkus-solace_configuration]]link:#quarkus-solace_configuration[Configurati
 h|Type
 h|Default
 
-a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus.solace.metrics.enabled]]`link:#quarkus-solace_quarkus.solace.metrics.enabled[quarkus.solace.metrics.enabled]`
+a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus-solace-metrics-enabled]]`link:#quarkus-solace_quarkus-solace-metrics-enabled[quarkus.solace.metrics.enabled]`
 
 
 [.description]
@@ -27,7 +27,7 @@ endif::add-copy-button-to-env-var[]
 |`true`
 
 
-a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus.solace.health.enabled]]`link:#quarkus-solace_quarkus.solace.health.enabled[quarkus.solace.health.enabled]`
+a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus-solace-health-enabled]]`link:#quarkus-solace_quarkus-solace-health-enabled[quarkus.solace.health.enabled]`
 
 
 [.description]
@@ -44,7 +44,7 @@ endif::add-copy-button-to-env-var[]
 |`true`
 
 
-a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus.solace.devservices.enabled]]`link:#quarkus-solace_quarkus.solace.devservices.enabled[quarkus.solace.devservices.enabled]`
+a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus-solace-devservices-enabled]]`link:#quarkus-solace_quarkus-solace-devservices-enabled[quarkus.solace.devservices.enabled]`
 
 
 [.description]
@@ -63,7 +63,7 @@ endif::add-copy-button-to-env-var[]
 |`true`
 
 
-a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus.solace.devservices.image-name]]`link:#quarkus-solace_quarkus.solace.devservices.image-name[quarkus.solace.devservices.image-name]`
+a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus-solace-devservices-image-name]]`link:#quarkus-solace_quarkus-solace-devservices-image-name[quarkus.solace.devservices.image-name]`
 
 
 [.description]
@@ -80,7 +80,7 @@ endif::add-copy-button-to-env-var[]
 |
 
 
-a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus.solace.devservices.shared]]`link:#quarkus-solace_quarkus.solace.devservices.shared[quarkus.solace.devservices.shared]`
+a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus-solace-devservices-shared]]`link:#quarkus-solace_quarkus-solace-devservices-shared[quarkus.solace.devservices.shared]`
 
 
 [.description]
@@ -101,7 +101,7 @@ endif::add-copy-button-to-env-var[]
 |`true`
 
 
-a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus.solace.devservices.service-name]]`link:#quarkus-solace_quarkus.solace.devservices.service-name[quarkus.solace.devservices.service-name]`
+a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus-solace-devservices-service-name]]`link:#quarkus-solace_quarkus-solace-devservices-service-name[quarkus.solace.devservices.service-name]`
 
 
 [.description]
@@ -120,7 +120,7 @@ endif::add-copy-button-to-env-var[]
 |`solace`
 
 
-a| [[quarkus-solace_quarkus.solace.host]]`link:#quarkus-solace_quarkus.solace.host[quarkus.solace.host]`
+a| [[quarkus-solace_quarkus-solace-host]]`link:#quarkus-solace_quarkus-solace-host[quarkus.solace.host]`
 
 
 [.description]
@@ -137,7 +137,7 @@ endif::add-copy-button-to-env-var[]
 |required icon:exclamation-circle[title=Configuration property is required]
 
 
-a| [[quarkus-solace_quarkus.solace.vpn]]`link:#quarkus-solace_quarkus.solace.vpn[quarkus.solace.vpn]`
+a| [[quarkus-solace_quarkus-solace-vpn]]`link:#quarkus-solace_quarkus-solace-vpn[quarkus.solace.vpn]`
 
 
 [.description]
@@ -154,7 +154,7 @@ endif::add-copy-button-to-env-var[]
 |required icon:exclamation-circle[title=Configuration property is required]
 
 
-a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus.solace.devservices.container-env-container-env]]`link:#quarkus-solace_quarkus.solace.devservices.container-env-container-env[quarkus.solace.devservices.container-env]`
+a|icon:lock[title=Fixed at build time] [[quarkus-solace_quarkus-solace-devservices-container-env-container-env]]`link:#quarkus-solace_quarkus-solace-devservices-container-env-container-env[quarkus.solace.devservices.container-env]`
 
 
 [.description]
@@ -171,7 +171,7 @@ endif::add-copy-button-to-env-var[]
 |
 
 
-a| [[quarkus-solace_quarkus.solace-extra]]`link:#quarkus-solace_quarkus.solace-extra[quarkus.solace]`
+a| [[quarkus-solace_quarkus-solace-extra]]`link:#quarkus-solace_quarkus-solace-extra[quarkus.solace]`
 
 
 [.description]
