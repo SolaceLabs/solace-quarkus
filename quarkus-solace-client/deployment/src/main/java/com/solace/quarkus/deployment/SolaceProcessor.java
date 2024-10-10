@@ -3,6 +3,7 @@ package com.solace.quarkus.deployment;
 import java.util.Optional;
 import java.util.function.Function;
 
+import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 
@@ -102,6 +103,14 @@ class SolaceProcessor {
     HealthBuildItem addHealthCheck(SolaceBuildTimeConfig buildTimeConfig) {
         return new HealthBuildItem("com.solace.quarkus.runtime.observability.SolaceHealthCheck",
                 buildTimeConfig.health().enabled());
+    }
+
+    /**
+     * `Version.identify()` in netty-common uses the resource to determine the version of netty.
+     */
+    @BuildStep
+    NativeImageResourceBuildItem nettyVersions() {
+        return new NativeImageResourceBuildItem("META-INF/io.netty.versions.properties");
     }
 
 }
