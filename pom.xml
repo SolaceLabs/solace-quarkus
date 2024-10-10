@@ -38,7 +38,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.version>3.8.6</quarkus.version>
 
-    <solace.version>1.6.0</solace.version>
+    <solace.version>1.4.0</solace.version>
 
     <assertj-core.version>3.24.2</assertj-core.version>
     <weld.version>5.1.2.Final</weld.version>
