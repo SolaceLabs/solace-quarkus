@@ -105,12 +105,4 @@ class SolaceProcessor {
                 buildTimeConfig.health().enabled());
     }
 
-    /**
-     * `Version.identify()` in netty-common uses the resource to determine the version of netty.
-     */
-    @BuildStep
-    NativeImageResourceBuildItem nettyVersions() {
-        return new NativeImageResourceBuildItem("META-INF/io.netty.versions.properties");
-    }
-
 }
