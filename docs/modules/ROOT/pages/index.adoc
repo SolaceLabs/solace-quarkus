@@ -25,7 +25,7 @@ For instance, with Maven, add the following dependency to your POM file:
 <dependency>
     <groupId>com.solace.quarkus</groupId>
     <artifactId>quarkus-solace-client</artifactId>
-    <version>{project-version}</version>
+    <version>3.0.0</version>
 </dependency>
 ----
 
@@ -42,9 +42,11 @@ For instance, with Maven, add the following dependency to your POM file:
 <dependency>
     <groupId>com.solace.quarkus</groupId>
     <artifactId>quarkus-solace-messaging-connector</artifactId>
-    <version>{project-version}</version>
+    <version>3.0.0</version>
 </dependency>
 ----
+
+NOTE: Solace Quarkus Extension 3.0.0 is based on Quarkus 3.8.6 and support for Java 11 is deprecated in Quarkus 3.8.6. Solace Quarkus Extension uses Java 17 as baseline.
 
 [[extension-configuration-reference]]
 == Extension Configuration Reference
