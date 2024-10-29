@@ -33,10 +33,10 @@ public class SolaceAttributeExtractor implements AttributesExtractor<SolaceTrace
             return "SolacePubSub+";
         }
 
-        @Override
-        public String getDestinationKind(SolaceTrace solaceTrace) {
-            return solaceTrace.getDestinationKind();
-        }
+        //        @Override
+        //        public String getDestinationKind(SolaceTrace solaceTrace) {
+        //            return solaceTrace.getDestinationKind();
+        //        }
 
         @Override
         public String getDestination(final SolaceTrace solaceTrace) {

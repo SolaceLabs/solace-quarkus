@@ -10,8 +10,8 @@ Samples folder has examples on how to use the connector - [solace-connector-samp
 
 ## Documentation
 
-The documentation for this extension should be maintained as part of this repository and it is stored in the `docs/` directory.
 
+The documentation for this extension should be maintained as part of this repository, and it is stored in the `docs/` directory. Documentation is hosted in GitHub pages. Link to  [Solace Quarkus Documentation](https://solacelabs.github.io/solace-quarkus/).
 ## Running the extension
 
 ```quarkus build``` to build the extension. Please note that docker should be up & running to run the tests during build process

@@ -28,7 +28,7 @@ public class SolaceOpenTelemetryInstrumenter {
     }
 
     private static SolaceOpenTelemetryInstrumenter createInstrumenter(boolean incoming) {
-        MessageOperation messageOperation = incoming ? MessageOperation.RECEIVE : MessageOperation.SEND;
+        MessageOperation messageOperation = incoming ? MessageOperation.RECEIVE : MessageOperation.PUBLISH;
 
         SolaceAttributeExtractor myExtractor = new SolaceAttributeExtractor();
         MessagingAttributesGetter<SolaceTrace, Void> attributesGetter = myExtractor.getMessagingAttributesGetter();
