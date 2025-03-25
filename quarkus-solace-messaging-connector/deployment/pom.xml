@@ -12,7 +12,7 @@
     <dependencies>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-smallrye-reactive-messaging-deployment</artifactId>
+            <artifactId>quarkus-messaging-deployment</artifactId>
         </dependency>
         <dependency>
             <groupId>com.solace.quarkus</groupId>
