@@ -9,7 +9,6 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.*;
 
-import com.solace.quarkus.messaging.base.UnsatisfiedInstance;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 
@@ -29,6 +28,7 @@ import com.solace.messaging.publisher.PersistentMessagePublisher;
 import com.solace.messaging.resources.Topic;
 import com.solace.quarkus.messaging.base.KeyCloakContainer;
 import com.solace.quarkus.messaging.base.SolaceContainer;
+import com.solace.quarkus.messaging.base.UnsatisfiedInstance;
 import com.solace.quarkus.messaging.incoming.SolaceIncomingChannel;
 
 import io.smallrye.mutiny.Multi;

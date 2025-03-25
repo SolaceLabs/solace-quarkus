@@ -6,7 +6,6 @@ import static org.awaitility.Awaitility.await;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.solace.quarkus.messaging.base.UnsatisfiedInstance;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import org.awaitility.Durations;
@@ -24,6 +23,7 @@ import com.solace.messaging.publisher.OutboundMessageBuilder;
 import com.solace.messaging.receiver.InboundMessage;
 import com.solace.messaging.resources.Topic;
 import com.solace.quarkus.messaging.base.SolaceContainer;
+import com.solace.quarkus.messaging.base.UnsatisfiedInstance;
 import com.solace.quarkus.messaging.base.WeldTestBase;
 import com.solace.quarkus.messaging.incoming.SolaceDirectMessageIncomingChannel;
 import com.solace.quarkus.messaging.incoming.SolaceInboundMessage;

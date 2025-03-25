@@ -8,7 +8,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Flow;
 
-import com.solace.quarkus.messaging.base.UnsatisfiedInstance;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import org.eclipse.microprofile.reactive.messaging.Message;
@@ -19,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import com.solace.messaging.receiver.PersistentMessageReceiver;
 import com.solace.messaging.resources.Queue;
 import com.solace.messaging.resources.TopicSubscription;
+import com.solace.quarkus.messaging.base.UnsatisfiedInstance;
 import com.solace.quarkus.messaging.base.WeldTestBase;
 import com.solace.quarkus.messaging.outgoing.SolaceOutboundMetadata;
 import com.solace.quarkus.messaging.outgoing.SolaceOutgoingChannel;

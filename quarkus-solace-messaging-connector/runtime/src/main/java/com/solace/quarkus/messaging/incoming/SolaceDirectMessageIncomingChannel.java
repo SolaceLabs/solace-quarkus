@@ -11,8 +11,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import io.opentelemetry.api.OpenTelemetry;
 import jakarta.enterprise.inject.Instance;
+
 import org.eclipse.microprofile.reactive.messaging.Message;
 
 import com.solace.messaging.DirectMessageReceiverBuilder;
@@ -27,6 +27,7 @@ import com.solace.quarkus.messaging.i18n.SolaceLogging;
 import com.solace.quarkus.messaging.tracing.SolaceOpenTelemetryInstrumenter;
 import com.solace.quarkus.messaging.tracing.SolaceTrace;
 
+import io.opentelemetry.api.OpenTelemetry;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.reactive.messaging.health.HealthReport;
@@ -54,7 +55,8 @@ public class SolaceDirectMessageIncomingChannel
     // Assuming we won't ever exceed the limit of an unsigned long...
     private final IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker = new IncomingMessagesUnsignedCounterBarrier();
 
-    public SolaceDirectMessageIncomingChannel(Vertx vertx, Instance<OpenTelemetry> openTelemetryInstance, SolaceConnectorIncomingConfiguration ic, MessagingService solace) {
+    public SolaceDirectMessageIncomingChannel(Vertx vertx, Instance<OpenTelemetry> openTelemetryInstance,
+            SolaceConnectorIncomingConfiguration ic, MessagingService solace) {
         this.solace = solace;
         this.channel = ic.getChannel();
         this.context = Context.newInstance(((VertxInternal) vertx.getDelegate()).createEventLoopContext());

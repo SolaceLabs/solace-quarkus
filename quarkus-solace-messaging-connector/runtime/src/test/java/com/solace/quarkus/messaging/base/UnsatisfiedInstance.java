@@ -32,7 +32,7 @@ public class UnsatisfiedInstance<T> implements Instance<T> {
 
     @Override
     public <U extends T> Instance<U> select(TypeLiteral<U> subtype,
-                                            Annotation... qualifiers) {
+            Annotation... qualifiers) {
         return instance();
     }
 
