@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.solace.quarkus.messaging.base.UnsatisfiedInstance;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import org.awaitility.Durations;
@@ -146,7 +147,7 @@ public class SolaceDirectMessageConsumerTest extends WeldTestBase {
 
         // Initialize incoming channel to consumes messages
         SolaceDirectMessageIncomingChannel solaceIncomingChannel = new SolaceDirectMessageIncomingChannel(Vertx.vertx(),
-                new SolaceConnectorIncomingConfiguration(config), messagingService);
+                UnsatisfiedInstance.instance(), new SolaceConnectorIncomingConfiguration(config), messagingService);
 
         CopyOnWriteArrayList<Object> list = new CopyOnWriteArrayList<>();
         CopyOnWriteArrayList<Object> ackedMessageList = new CopyOnWriteArrayList<>();

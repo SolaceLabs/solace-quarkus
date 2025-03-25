@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Flow;
 
+import com.solace.quarkus.messaging.base.UnsatisfiedInstance;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import org.eclipse.microprofile.reactive.messaging.Message;
@@ -117,7 +118,7 @@ public class SolacePublisherTest extends WeldTestBase {
         receiver.receiveAsync(inboundMessage -> expected.add(inboundMessage.getPayloadAsString()));
         receiver.start();
 
-        SolaceOutgoingChannel solaceOutgoingChannel = new SolaceOutgoingChannel(Vertx.vertx(),
+        SolaceOutgoingChannel solaceOutgoingChannel = new SolaceOutgoingChannel(Vertx.vertx(), UnsatisfiedInstance.instance(),
                 new SolaceConnectorOutgoingConfiguration(config), messagingService);
         // Publish messages
         Multi.createFrom().range(0, 10)

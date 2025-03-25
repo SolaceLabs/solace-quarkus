@@ -2,8 +2,8 @@ package com.solace.quarkus.messaging.tracing;
 
 import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.context.Context;
+import io.opentelemetry.instrumentation.api.incubator.semconv.messaging.MessagingAttributesGetter;
 import io.opentelemetry.instrumentation.api.instrumenter.AttributesExtractor;
-import io.opentelemetry.instrumentation.api.instrumenter.messaging.MessagingAttributesGetter;
 
 public class SolaceAttributeExtractor implements AttributesExtractor<SolaceTrace, Void> {
     private final MessagingAttributesGetter<SolaceTrace, Void> messagingAttributesGetter;
@@ -44,7 +44,17 @@ public class SolaceAttributeExtractor implements AttributesExtractor<SolaceTrace
         }
 
         @Override
+        public String getDestinationTemplate(SolaceTrace solaceTrace) {
+            return "";
+        }
+
+        @Override
         public boolean isTemporaryDestination(final SolaceTrace solaceTrace) {
+            return false;
+        }
+
+        @Override
+        public boolean isAnonymousDestination(SolaceTrace solaceTrace) {
             return false;
         }
 
@@ -64,8 +74,28 @@ public class SolaceAttributeExtractor implements AttributesExtractor<SolaceTrace
         }
 
         @Override
+        public Long getMessageBodySize(SolaceTrace solaceTrace) {
+            return 0L;
+        }
+
+        @Override
+        public Long getMessageEnvelopeSize(SolaceTrace solaceTrace) {
+            return 0L;
+        }
+
+        @Override
         public String getMessageId(final SolaceTrace solaceTrace, final Void unused) {
             return solaceTrace.getMessageId();
+        }
+
+        @Override
+        public String getClientId(SolaceTrace solaceTrace) {
+            return "";
+        }
+
+        @Override
+        public Long getBatchMessageCount(SolaceTrace solaceTrace, Void unused) {
+            return 0L;
         }
 
     }

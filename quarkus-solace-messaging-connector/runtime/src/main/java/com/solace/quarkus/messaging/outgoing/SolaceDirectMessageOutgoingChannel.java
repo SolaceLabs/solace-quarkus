@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import io.opentelemetry.api.OpenTelemetry;
+import jakarta.enterprise.inject.Instance;
 import org.eclipse.microprofile.reactive.messaging.Message;
 
 import com.solace.messaging.DirectMessagePublisherBuilder;
@@ -46,7 +48,7 @@ public class SolaceDirectMessageOutgoingChannel
     // Assuming we won't ever exceed the limit of an unsigned long...
     private final OutgoingMessagesUnsignedCounterBarrier publishedMessagesTracker = new OutgoingMessagesUnsignedCounterBarrier();
 
-    public SolaceDirectMessageOutgoingChannel(Vertx vertx, SolaceConnectorOutgoingConfiguration oc, MessagingService solace) {
+    public SolaceDirectMessageOutgoingChannel(Vertx vertx, Instance<OpenTelemetry> openTelemetryInstance, SolaceConnectorOutgoingConfiguration oc, MessagingService solace) {
         this.solace = solace;
         this.channel = oc.getChannel();
         DirectMessagePublisherBuilder builder = solace.createDirectMessagePublisherBuilder();
@@ -67,7 +69,7 @@ public class SolaceDirectMessageOutgoingChannel
         boolean lazyStart = oc.getClientLazyStart();
         this.topic = Topic.of(oc.getProducerTopic().orElse(this.channel));
         if (oc.getClientTracingEnabled()) {
-            solaceOpenTelemetryInstrumenter = SolaceOpenTelemetryInstrumenter.createForOutgoing();
+            solaceOpenTelemetryInstrumenter = SolaceOpenTelemetryInstrumenter.createForOutgoing(openTelemetryInstance);
         } else {
             solaceOpenTelemetryInstrumenter = null;
         }

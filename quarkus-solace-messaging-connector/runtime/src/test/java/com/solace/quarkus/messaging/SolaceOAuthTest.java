@@ -9,6 +9,7 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.*;
 
+import com.solace.quarkus.messaging.base.UnsatisfiedInstance;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 
@@ -135,7 +136,7 @@ public class SolaceOAuthTest {
                 .with("consumer.subscriptions", SolaceContainer.INTEGRATION_TEST_QUEUE_SUBSCRIPTION);
 
         MessagingService messagingService = getMessagingService();
-        SolaceIncomingChannel solaceIncomingChannel = new SolaceIncomingChannel(Vertx.vertx(),
+        SolaceIncomingChannel solaceIncomingChannel = new SolaceIncomingChannel(Vertx.vertx(), UnsatisfiedInstance.instance(),
                 new SolaceConnectorIncomingConfiguration(config), messagingService);
 
         CopyOnWriteArrayList<Object> list = new CopyOnWriteArrayList<>();

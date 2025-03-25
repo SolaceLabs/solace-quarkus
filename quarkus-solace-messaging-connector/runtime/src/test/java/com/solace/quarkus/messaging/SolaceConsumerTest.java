@@ -25,6 +25,7 @@ import com.solace.messaging.publisher.PersistentMessagePublisher;
 import com.solace.messaging.receiver.InboundMessage;
 import com.solace.messaging.resources.Topic;
 import com.solace.quarkus.messaging.base.SolaceContainer;
+import com.solace.quarkus.messaging.base.UnsatisfiedInstance;
 import com.solace.quarkus.messaging.base.WeldTestBase;
 import com.solace.quarkus.messaging.incoming.SolaceInboundMessage;
 import com.solace.quarkus.messaging.incoming.SolaceIncomingChannel;
@@ -303,7 +304,7 @@ public class SolaceConsumerTest extends WeldTestBase {
                 .with("consumer.subscriptions", topic);
 
         // Initialize incoming channel to consumes messages
-        SolaceIncomingChannel solaceIncomingChannel = new SolaceIncomingChannel(Vertx.vertx(),
+        SolaceIncomingChannel solaceIncomingChannel = new SolaceIncomingChannel(Vertx.vertx(), UnsatisfiedInstance.instance(),
                 new SolaceConnectorIncomingConfiguration(config), messagingService);
 
         CopyOnWriteArrayList<Object> list = new CopyOnWriteArrayList<>();
