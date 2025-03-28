@@ -12,6 +12,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.inject.Instance;
+
 import org.eclipse.microprofile.reactive.messaging.Message;
 
 import com.solace.messaging.MessagingService;
@@ -31,6 +33,7 @@ import com.solace.quarkus.messaging.i18n.SolaceLogging;
 import com.solace.quarkus.messaging.tracing.SolaceOpenTelemetryInstrumenter;
 import com.solace.quarkus.messaging.tracing.SolaceTrace;
 
+import io.opentelemetry.api.OpenTelemetry;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.reactive.messaging.health.HealthReport;
@@ -58,7 +61,8 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     // Assuming we won't ever exceed the limit of an unsigned long...
     private final IncomingMessagesUnsignedCounterBarrier unacknowledgedMessageTracker = new IncomingMessagesUnsignedCounterBarrier();
 
-    public SolaceIncomingChannel(Vertx vertx, SolaceConnectorIncomingConfiguration ic, MessagingService solace) {
+    public SolaceIncomingChannel(Vertx vertx, Instance<OpenTelemetry> openTelemetryInstance,
+            SolaceConnectorIncomingConfiguration ic, MessagingService solace) {
         this.solace = solace;
         this.channel = ic.getChannel();
         this.context = Context.newInstance(((VertxInternal) vertx.getDelegate()).createEventLoopContext());
@@ -119,7 +123,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
                         unacknowledgedMessageTracker, this::reportFailure));
 
         if (ic.getClientTracingEnabled()) {
-            solaceOpenTelemetryInstrumenter = SolaceOpenTelemetryInstrumenter.createForIncoming();
+            solaceOpenTelemetryInstrumenter = SolaceOpenTelemetryInstrumenter.createForIncoming(openTelemetryInstance);
             incomingMulti = incomingMulti.map(message -> {
                 InboundMessage consumedMessage = message.getMetadata(SolaceInboundMetadata.class).get().getMessage();
                 Map<String, String> messageProperties = new HashMap<>();

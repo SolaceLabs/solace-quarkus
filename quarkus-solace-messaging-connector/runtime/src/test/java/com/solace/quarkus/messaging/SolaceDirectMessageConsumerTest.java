@@ -23,6 +23,7 @@ import com.solace.messaging.publisher.OutboundMessageBuilder;
 import com.solace.messaging.receiver.InboundMessage;
 import com.solace.messaging.resources.Topic;
 import com.solace.quarkus.messaging.base.SolaceContainer;
+import com.solace.quarkus.messaging.base.UnsatisfiedInstance;
 import com.solace.quarkus.messaging.base.WeldTestBase;
 import com.solace.quarkus.messaging.incoming.SolaceDirectMessageIncomingChannel;
 import com.solace.quarkus.messaging.incoming.SolaceInboundMessage;
@@ -146,7 +147,7 @@ public class SolaceDirectMessageConsumerTest extends WeldTestBase {
 
         // Initialize incoming channel to consumes messages
         SolaceDirectMessageIncomingChannel solaceIncomingChannel = new SolaceDirectMessageIncomingChannel(Vertx.vertx(),
-                new SolaceConnectorIncomingConfiguration(config), messagingService);
+                UnsatisfiedInstance.instance(), new SolaceConnectorIncomingConfiguration(config), messagingService);
 
         CopyOnWriteArrayList<Object> list = new CopyOnWriteArrayList<>();
         CopyOnWriteArrayList<Object> ackedMessageList = new CopyOnWriteArrayList<>();

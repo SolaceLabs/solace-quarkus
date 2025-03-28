@@ -8,6 +8,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.inject.Instance;
+
 import org.eclipse.microprofile.reactive.messaging.Message;
 
 import com.solace.messaging.MessagingService;
@@ -27,6 +29,7 @@ import com.solace.quarkus.messaging.tracing.SolaceOpenTelemetryInstrumenter;
 import com.solace.quarkus.messaging.tracing.SolaceTrace;
 
 import io.netty.handler.codec.http.HttpHeaderValues;
+import io.opentelemetry.api.OpenTelemetry;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.subscription.UniEmitter;
 import io.smallrye.reactive.messaging.OutgoingMessageMetadata;
@@ -54,7 +57,8 @@ public class SolaceOutgoingChannel
     // Assuming we won't ever exceed the limit of an unsigned long...
     private final OutgoingMessagesUnsignedCounterBarrier publishedMessagesTracker = new OutgoingMessagesUnsignedCounterBarrier();
 
-    public SolaceOutgoingChannel(Vertx vertx, SolaceConnectorOutgoingConfiguration oc, MessagingService solace) {
+    public SolaceOutgoingChannel(Vertx vertx, Instance<OpenTelemetry> openTelemetryInstance,
+            SolaceConnectorOutgoingConfiguration oc, MessagingService solace) {
         this.solace = solace;
         this.channel = oc.getChannel();
         PersistentMessagePublisherBuilder builder = solace.createPersistentMessagePublisherBuilder();
@@ -80,7 +84,7 @@ public class SolaceOutgoingChannel
         boolean lazyStart = oc.getClientLazyStart();
         this.topic = Topic.of(oc.getProducerTopic().orElse(this.channel));
         if (oc.getClientTracingEnabled()) {
-            solaceOpenTelemetryInstrumenter = SolaceOpenTelemetryInstrumenter.createForOutgoing();
+            solaceOpenTelemetryInstrumenter = SolaceOpenTelemetryInstrumenter.createForOutgoing(openTelemetryInstance);
         } else {
             solaceOpenTelemetryInstrumenter = null;
         }

@@ -28,6 +28,7 @@ import com.solace.messaging.publisher.PersistentMessagePublisher;
 import com.solace.messaging.resources.Topic;
 import com.solace.quarkus.messaging.base.KeyCloakContainer;
 import com.solace.quarkus.messaging.base.SolaceContainer;
+import com.solace.quarkus.messaging.base.UnsatisfiedInstance;
 import com.solace.quarkus.messaging.incoming.SolaceIncomingChannel;
 
 import io.smallrye.mutiny.Multi;
@@ -135,7 +136,7 @@ public class SolaceOAuthTest {
                 .with("consumer.subscriptions", SolaceContainer.INTEGRATION_TEST_QUEUE_SUBSCRIPTION);
 
         MessagingService messagingService = getMessagingService();
-        SolaceIncomingChannel solaceIncomingChannel = new SolaceIncomingChannel(Vertx.vertx(),
+        SolaceIncomingChannel solaceIncomingChannel = new SolaceIncomingChannel(Vertx.vertx(), UnsatisfiedInstance.instance(),
                 new SolaceConnectorIncomingConfiguration(config), messagingService);
 
         CopyOnWriteArrayList<Object> list = new CopyOnWriteArrayList<>();

@@ -12,6 +12,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.BeforeDestroyed;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.Reception;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
 import org.eclipse.microprofile.config.Config;
@@ -24,6 +25,7 @@ import com.solace.quarkus.messaging.incoming.SolaceIncomingChannel;
 import com.solace.quarkus.messaging.outgoing.SolaceDirectMessageOutgoingChannel;
 import com.solace.quarkus.messaging.outgoing.SolaceOutgoingChannel;
 
+import io.opentelemetry.api.OpenTelemetry;
 import io.smallrye.reactive.messaging.annotations.ConnectorAttribute;
 import io.smallrye.reactive.messaging.connector.InboundConnector;
 import io.smallrye.reactive.messaging.connector.OutboundConnector;
@@ -77,6 +79,9 @@ public class SolaceConnector implements InboundConnector, OutboundConnector, Hea
     @Inject
     MessagingService solace;
 
+    @Inject
+    Instance<OpenTelemetry> openTelemetryInstance;
+
     Vertx vertx;
 
     List<SolaceIncomingChannel> incomingChannels = new CopyOnWriteArrayList<>();
@@ -101,11 +106,12 @@ public class SolaceConnector implements InboundConnector, OutboundConnector, Hea
     public Flow.Publisher<? extends Message<?>> getPublisher(Config config) {
         var ic = new SolaceConnectorIncomingConfiguration(config);
         if (ic.getClientType().equals("direct")) {
-            SolaceDirectMessageIncomingChannel channel = new SolaceDirectMessageIncomingChannel(vertx, ic, solace);
+            SolaceDirectMessageIncomingChannel channel = new SolaceDirectMessageIncomingChannel(vertx, openTelemetryInstance,
+                    ic, solace);
             directMessageIncomingChannels.add(channel);
             return channel.getStream();
         } else {
-            SolaceIncomingChannel channel = new SolaceIncomingChannel(vertx, ic, solace);
+            SolaceIncomingChannel channel = new SolaceIncomingChannel(vertx, openTelemetryInstance, ic, solace);
             incomingChannels.add(channel);
             return channel.getStream();
         }
@@ -115,11 +121,12 @@ public class SolaceConnector implements InboundConnector, OutboundConnector, Hea
     public Flow.Subscriber<? extends Message<?>> getSubscriber(Config config) {
         var oc = new SolaceConnectorOutgoingConfiguration(config);
         if (oc.getClientType().equals("direct")) {
-            SolaceDirectMessageOutgoingChannel channel = new SolaceDirectMessageOutgoingChannel(vertx, oc, solace);
+            SolaceDirectMessageOutgoingChannel channel = new SolaceDirectMessageOutgoingChannel(vertx, openTelemetryInstance,
+                    oc, solace);
             directMessageOutgoingChannels.add(channel);
             return channel.getSubscriber();
         } else {
-            SolaceOutgoingChannel channel = new SolaceOutgoingChannel(vertx, oc, solace);
+            SolaceOutgoingChannel channel = new SolaceOutgoingChannel(vertx, openTelemetryInstance, oc, solace);
             outgoingChannels.add(channel);
             return channel.getSubscriber();
         }

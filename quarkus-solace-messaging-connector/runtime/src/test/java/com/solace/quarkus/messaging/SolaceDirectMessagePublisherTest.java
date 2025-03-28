@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import com.solace.messaging.receiver.DirectMessageReceiver;
 import com.solace.messaging.resources.TopicSubscription;
+import com.solace.quarkus.messaging.base.UnsatisfiedInstance;
 import com.solace.quarkus.messaging.base.WeldTestBase;
 import com.solace.quarkus.messaging.outgoing.SolaceOutboundMetadata;
 import com.solace.quarkus.messaging.outgoing.SolaceOutgoingChannel;
@@ -95,7 +96,7 @@ public class SolaceDirectMessagePublisherTest extends WeldTestBase {
         receiver.receiveAsync(inboundMessage -> expected.add(inboundMessage.getPayloadAsString()));
         receiver.start();
 
-        SolaceOutgoingChannel solaceOutgoingChannel = new SolaceOutgoingChannel(Vertx.vertx(),
+        SolaceOutgoingChannel solaceOutgoingChannel = new SolaceOutgoingChannel(Vertx.vertx(), UnsatisfiedInstance.instance(),
                 new SolaceConnectorOutgoingConfiguration(config), messagingService);
         // Publish messages
         Multi.createFrom().range(0, 10)
