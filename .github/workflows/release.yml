@@ -23,7 +23,6 @@ permissions:
   packages: write
   checks: write
 
-
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -34,24 +33,24 @@ jobs:
           ref: ${{ github.event.inputs.sourceBranch }}
 
       - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 #v6.1.0 
+        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 #v6.1.0
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_SECRET }}
-      
+
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: 17
-          cache: 'maven'
+          cache: "maven"
           server-id: github
           gpg-passphrase: GPG_PASSPHRASE
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
 
       - name: Pre-Release Check - Version
         env:
-           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh api --method GET /repos/${{github.repository}}/releases -f sort=updated -f direction=asc > releases.json
           release_version_exists=$(jq -r --arg RELEASE_VERSION ${{ github.event.inputs.releaseVersion }} '.[].name|select(. == $RELEASE_VERSION)'  releases.json)
@@ -68,18 +67,18 @@ jobs:
           ssh-host: github.com
       - name: Set Build Params
         run: |
-            echo "SKIP_FLAGS_ALL_TESTS=-DskipTests=true" >> $GITHUB_ENV
-            if echo "${{github.event.inputs.releaseVersion}}" | grep -iP 'ea|rc'; then
-              NEXT_DEV_REVISION="\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.incrementalVersion}"
-            else
-              NEXT_DEV_REVISION="\${next-revision}"
-            fi
-            echo "Calculated Params"
-            echo "NEXT_DEV_REVISION=$NEXT_DEV_REVISION"
-            echo "NEXT_DEV_REVISION=$NEXT_DEV_REVISION" >> $GITHUB_ENV
-      
+          echo "SKIP_FLAGS_ALL_TESTS=-DskipTests=true" >> $GITHUB_ENV
+          if echo "${{github.event.inputs.releaseVersion}}" | grep -iP 'ea|rc'; then
+            NEXT_DEV_REVISION="\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.incrementalVersion}"
+          else
+            NEXT_DEV_REVISION="\${next-revision}"
+          fi
+          echo "Calculated Params"
+          echo "NEXT_DEV_REVISION=$NEXT_DEV_REVISION"
+          echo "NEXT_DEV_REVISION=$NEXT_DEV_REVISION" >> $GITHUB_ENV
+
       - name: Release Version - Prepare
-        run:  >-
+        run: >-
           mvn -B -U validate
           versions:set-property
           -Dproperty=revision
@@ -95,27 +94,27 @@ jobs:
           if ! git diff --quiet docs/modules/ROOT/pages/includes/attributes.adoc; then
             git add docs/modules/ROOT/pages/includes/attributes.adoc
           fi
-      
+
       - name: Verify Maven
         run: mvn -B verify
-      
+
       - name: Publishing Test Results - Unit/Integration Tests Pre-Condition
         if: always()
         id: unit_integration_test_report_exists
         uses: andstor/file-existence-action@v2
         with:
           files: "**/surefire-reports/**/TEST*.xml"
-      
+
       - name: Publishing Test Results - Unit/Integration Tests
         uses: dorny/test-reporter@v1.7.0
         if: always() && steps.unit_integration_test_report_exists.outputs.files_exists == 'true'
         with:
           name: Test Results
           path: "**/surefire-reports/**/TEST*.xml"
-          fail-on-error: 'false'
+          fail-on-error: "false"
           reporter: java-junit
-          only-summary: 'true'
-      
+          only-summary: "true"
+
       - name: Configure Git author
         run: |
           git config --local user.email "action@github.com"
@@ -130,24 +129,23 @@ jobs:
           -Dmessage="[ci skip] prepare release ${{ github.event.inputs.releaseVersion }}" &&
           mvn -B scm:tag  -Dtag=${{ github.event.inputs.releaseVersion }}
 
-
       - name: GitHub Packages - Deploy Artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_PASSPHRASE: ${{ secrets.GPG_SECRET }}
         run: |
           mvn -B deploy -Dmaven.install.skip=true $SKIP_FLAGS_ALL_TESTS -Pgithub,publish
-      
+
       - name: maven-settings-xml-action
         uses: whelk-io/maven-settings-xml-action@v4
         with:
-          servers: '[{ "id": "ossrh", "username": "${{ secrets.OSSRH_USER }}", "password": "${{ secrets.OSSRH_PASS }}" }]'
-      
+          servers: '[{ "id": "central", "username": "${{ secrets.MAVEN_USERNAME }}", "password": "${{ secrets.MAVEN_PASSWORD }}" }]'
+
       - name: Maven Central - Deploy Artifacts
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_SECRET }}
         run: |
-          mvn -B deploy -Dmaven.install.skip=true $SKIP_FLAGS_ALL_TESTS -Possrh,publish
+          mvn -B deploy -Dmaven.install.skip=true $SKIP_FLAGS_ALL_TESTS -Pcentral,publish
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
@@ -155,7 +153,7 @@ jobs:
           tag: "${{ github.event.inputs.releaseVersion }}"
           generateReleaseNotes: true
           makeLatest: true
-  
+
       - name: Next Develoment Version - Prepare and Checkin
         run: >-
           mvn -B -U validate build-helper:parse-version versions:set-property
@@ -169,5 +167,3 @@ jobs:
           -DscmVersion=${{ github.event.inputs.sourceBranch }}
           -DscmVersionType=branch
           -Dmessage="[ci skip] prepare for next development iteration"
-
-
