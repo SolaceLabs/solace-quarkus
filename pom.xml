@@ -38,7 +38,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.version>3.27.2</quarkus.version>
 
-    <solace.version>1.8.2</solace.version>
+    <solace.version>1.9.0</solace.version>
     <solace.jcsmp.version>10.28.2</solace.jcsmp.version>
 
     <assertj-core.version>3.24.2</assertj-core.version>
@@ -46,6 +46,20 @@
     <testcontainers-solace.version>1.18.3</testcontainers-solace.version>
     <slf4j-log4j12.version>2.0.7</slf4j-log4j12.version>
   </properties>
+
+  <modules>
+    <module>quarkus-solace-client</module>
+    <module>quarkus-solace-jcsmp-client</module>
+    <module>quarkus-solace-messaging-connector</module>
+    <module>quarkus-solace-jcsmp-messaging-connector</module>
+    <module>docs</module>
+    <module>samples/hello-solace</module>
+    <module>samples/hello-solace-jcsmp</module>
+    <module>samples/hello-connector-solace</module>
+    <module>samples/hello-connector-solace-jcsmp</module>
+    <module>integration-tests</module>
+    <module>integration-tests-jcsmp</module>
+  </modules>
 
   <dependencyManagement>
     <dependencies>

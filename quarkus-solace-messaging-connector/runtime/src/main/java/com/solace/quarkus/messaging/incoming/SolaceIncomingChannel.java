@@ -49,7 +49,13 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     private final SolaceFailureHandler failureHandler;
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final AtomicBoolean alive = new AtomicBoolean(true);
-    private final PersistentMessageReceiver receiver;
+    // receiver is rebuilt on reconnect, so it can't be final. volatile so the
+    // poller thread sees the new instance immediately after a rebuild.
+    private volatile PersistentMessageReceiver receiver;
+    // Config kept so the receiver can be rebuilt with identical settings on reconnect.
+    private final SolaceConnectorIncomingConfiguration ic;
+    // Guards against overlapping rebuilds if multiple reconnect events arrive.
+    private final AtomicBoolean rebuilding = new AtomicBoolean(false);
     private final Flow.Publisher<? extends Message<?>> stream;
     private final ExecutorService pollerThread;
     private final boolean gracefulShutdown;
@@ -64,61 +70,41 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     public SolaceIncomingChannel(Vertx vertx, Instance<OpenTelemetry> openTelemetryInstance,
             SolaceConnectorIncomingConfiguration ic, MessagingService solace) {
         this.solace = solace;
+        this.ic = ic;
         this.channel = ic.getChannel();
         this.context = Context.newInstance(((VertxInternal) vertx.getDelegate()).createEventLoopContext());
         this.gracefulShutdown = ic.getClientGracefulShutdown();
         this.gracefulShutdownWaitTimeout = ic.getClientGracefulShutdownWaitTimeout();
-        Outcome[] outcomes = new Outcome[] { Outcome.ACCEPTED };
-        if (ic.getConsumerQueueSupportsNacks()) {
-            outcomes = new Outcome[] { Outcome.ACCEPTED, Outcome.FAILED, Outcome.REJECTED };
-        }
-        PersistentMessageReceiverBuilder builder = solace.createPersistentMessageReceiverBuilder()
-                .withMessageClientAcknowledgement()
-                .withRequiredMessageClientOutcomeOperationSupport(outcomes)
-                .withActivationPassivationSupport(this);
 
-        ic.getConsumerQueueSelectorQuery().ifPresent(builder::withMessageSelector);
-        ic.getConsumerQueueReplayStrategy().ifPresent(s -> {
-            switch (s) {
-                case "all-messages":
-                    builder.withMessageReplay(ReplayStrategy.allMessages());
-                    break;
-                case "time-based":
-                    builder.withMessageReplay(getTimeBasedReplayStrategy(ic));
-                    break;
-                case "replication-group-message-id":
-                    builder.withMessageReplay(getGroupMessageIdReplayStrategy(ic));
-                    break;
-            }
-        });
-        if (ic.getConsumerQueueAddAdditionalSubscriptions()) {
-            String subscriptions = ic.getConsumerSubscriptions().orElse(this.channel);
-            builder.withSubscriptions(Arrays.stream(subscriptions.split(","))
-                    .map(TopicSubscription::of)
-                    .toArray(TopicSubscription[]::new));
-        }
-        switch (ic.getConsumerQueueMissingResourceCreationStrategy()) {
-            case "create-on-start":
-                builder.withMissingResourcesCreationStrategy(MissingResourcesCreationStrategy.CREATE_ON_START);
-                break;
-            case "do-not-create":
-                builder.withMissingResourcesCreationStrategy(MissingResourcesCreationStrategy.DO_NOT_CREATE);
-                break;
-        }
-
-        this.receiver = builder.build(getQueue(ic));
+        this.receiver = buildReceiver();
         boolean lazyStart = ic.getClientLazyStart();
-        this.ackHandler = new SolaceAckHandler(receiver);
+        // Supplier so the ack handler always targets the CURRENT receiver, which
+        // changes when the receiver is rebuilt on reconnect.
+        this.ackHandler = new SolaceAckHandler(() -> this.receiver);
         this.failureHandler = createFailureHandler(ic, solace);
 
         // TODO Here use a subscription receiver.receiveAsync with an internal queue
         this.pollerThread = Executors.newSingleThreadExecutor();
 
         Multi<? extends Message<?>> incomingMulti = Multi.createBy().repeating()
-                .uni(() -> Uni.createFrom().item(receiver::receiveMessage)
+                // FIX: use receiveMessage(timeout) instead of the no-arg blocking variant.
+                // The no-arg receiveMessage() blocks the single poller thread forever. When
+                // the session reconnects (e.g. after an OAuth token refresh / broker-initiated
+                // close), the blocking call against the old flow never returns and the poller
+                // never resumes pulling from the re-established flow — consumption stops
+                // permanently. With a 1s timeout the poller wakes up regularly, so once the
+                // Solace API rebinds the flow after reconnect, the next poll picks up messages
+                // again and consumption resumes automatically.
+                .uni(() -> Uni.createFrom().item(() -> this.receiver.receiveMessage(1000))
                         .runSubscriptionOn(pollerThread))
                 .until(__ -> closed.get())
                 .emitOn(context::runOnContext)
+                // receiveMessage(timeout) returns null when no message arrives within the
+                // timeout (idle, or flow temporarily unavailable during reconnect). Drop the
+                // nulls so they never reach the mapping step — a null would NPE in
+                // convertPayload() and, via the retry-then-report path below, terminate the
+                // whole stream.
+                .filter(Objects::nonNull)
                 .map(consumed -> new SolaceInboundMessage<>(consumed, ackHandler, failureHandler,
                         unacknowledgedMessageTracker, this::reportFailure));
 
@@ -157,13 +143,125 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
 
         this.stream = incomingMulti.plug(m -> lazyStart
                 ? m.onSubscription()
-                        .call(() -> Uni.createFrom().completionStage(receiver.startAsync()))
+                        .call(() -> Uni.createFrom().completionStage(this.receiver.startAsync()))
                 : m)
                 .onItem().invoke(() -> alive.set(true))
-                .onFailure().retry().withBackOff(Duration.ofSeconds(1)).atMost(3).onFailure().invoke(this::reportFailure);
+                // FIX: retry indefinitely instead of atMost(3). Previously, three consecutive
+                // failures (which is what happens when the flow throws during a reconnect
+                // window) terminated the stream for good via reportFailure(), so consumption
+                // never recovered even after the session reconnected successfully. Retrying
+                // indefinitely with a capped backoff means a transient reconnect exception is
+                // survived: the poller keeps retrying until the flow is available again.
+                // reportFailure() is still invoked on each failure so health reporting and the
+                // failures list stay accurate, but the stream is never permanently terminated.
+                .onFailure().invoke(this::reportFailure)
+                .onFailure().retry().withBackOff(Duration.ofSeconds(1), Duration.ofSeconds(10)).indefinitely();
 
         if (!lazyStart) {
-            receiver.start();
+            this.receiver.start();
+        }
+
+        // FIX (DATAGO-141425): rebuild the receiver after the session reconnects.
+        // After an OAuth-triggered "Channel is closed by peer" the transport
+        // reconnects successfully, but the consumer flow bound to the old session
+        // is dead. POLL-TRACE confirmed that calling receiver.start() on the
+        // already-started receiver is a no-op: the poller keeps calling
+        // receiveMessage() and gets null forever because the flow was never
+        // rebound. The only reliable recovery is to terminate the stale receiver
+        // and build+start a fresh one bound to the new session.
+        // addReconnectionListener fires AFTER a successful reconnect (unlike
+        // addReconnectionAttemptListener which fires during the attempt).
+        solace.addReconnectionListener(serviceEvent -> {
+            SolaceLogging.log.infof("Session reconnected on channel %s", channel);
+            rebuildReceiverAfterReconnect();
+        });
+    }
+
+    /**
+     * Builds a fresh {@link PersistentMessageReceiver} with the channel's
+     * configured settings. Called once at construction and again on every
+     * reconnect to fully re-establish the consumer flow — calling
+     * {@code receiver.start()} on an already-started receiver is a no-op and
+     * does NOT rebind the flow to a reconnected session (confirmed by
+     * POLL-TRACE showing receiveMessage() returning null indefinitely after
+     * reconnect). Rebuilding is the only reliable way to bind a new flow.
+     */
+    private PersistentMessageReceiver buildReceiver() {
+        Outcome[] outcomes = new Outcome[] { Outcome.ACCEPTED };
+        if (ic.getConsumerQueueSupportsNacks()) {
+            outcomes = new Outcome[] { Outcome.ACCEPTED, Outcome.FAILED, Outcome.REJECTED };
+        }
+        PersistentMessageReceiverBuilder builder = solace.createPersistentMessageReceiverBuilder()
+                .withMessageClientAcknowledgement()
+                .withRequiredMessageClientOutcomeOperationSupport(outcomes)
+                .withActivationPassivationSupport(this);
+
+        ic.getConsumerQueueSelectorQuery().ifPresent(builder::withMessageSelector);
+        ic.getConsumerQueueReplayStrategy().ifPresent(s -> {
+            switch (s) {
+                case "all-messages":
+                    builder.withMessageReplay(ReplayStrategy.allMessages());
+                    break;
+                case "time-based":
+                    builder.withMessageReplay(getTimeBasedReplayStrategy(ic));
+                    break;
+                case "replication-group-message-id":
+                    builder.withMessageReplay(getGroupMessageIdReplayStrategy(ic));
+                    break;
+            }
+        });
+        if (ic.getConsumerQueueAddAdditionalSubscriptions()) {
+            String subscriptions = ic.getConsumerSubscriptions().orElse(this.channel);
+            builder.withSubscriptions(Arrays.stream(subscriptions.split(","))
+                    .map(TopicSubscription::of)
+                    .toArray(TopicSubscription[]::new));
+        }
+        switch (ic.getConsumerQueueMissingResourceCreationStrategy()) {
+            case "create-on-start":
+                builder.withMissingResourcesCreationStrategy(MissingResourcesCreationStrategy.CREATE_ON_START);
+                break;
+            case "do-not-create":
+                builder.withMissingResourcesCreationStrategy(MissingResourcesCreationStrategy.DO_NOT_CREATE);
+                break;
+        }
+        return builder.build(getQueue(ic));
+    }
+
+    /**
+     * Rebuilds and restarts the receiver after a session reconnect. Terminates
+     * the stale receiver (whose flow is bound to the dead session), builds a
+     * fresh one, and starts it so the poller resumes pulling from the new flow.
+     */
+    private void rebuildReceiverAfterReconnect() {
+        if (closed.get()) {
+            return;
+        }
+        // Prevent overlapping rebuilds if several reconnect events fire together.
+        if (!rebuilding.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            SolaceLogging.log.infof("Rebuilding receiver on channel %s after reconnect", channel);
+            PersistentMessageReceiver old = this.receiver;
+            try {
+                if (old != null) {
+                    old.terminate(2000);
+                }
+            } catch (Throwable t) {
+                SolaceLogging.log.infof("Ignoring error terminating stale receiver on channel %s: %s",
+                        channel, t.getMessage());
+            }
+            PersistentMessageReceiver fresh = buildReceiver();
+            fresh.start();
+            // volatile write — the poller lambda reads `receiver` each iteration
+            // and will pull from this fresh instance on its next poll.
+            this.receiver = fresh;
+            alive.set(true);
+            SolaceLogging.log.infof("Receiver rebuilt and started on channel %s — consumption resumed", channel);
+        } catch (Throwable t) {
+            SolaceLogging.log.errorf(t, "Failed to rebuild receiver on channel %s after reconnect", channel);
+        } finally {
+            rebuilding.set(false);
         }
     }
 
@@ -183,16 +281,16 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
             case IGNORE:
                 return new SolaceIgnoreFailure(ic.getChannel());
             case FAIL:
-                return new SolaceFail(ic.getChannel(), receiver);
+                return new SolaceFail(ic.getChannel(), () -> this.receiver);
             case DISCARD:
-                return new SolaceDiscard(ic.getChannel(), receiver);
+                return new SolaceDiscard(ic.getChannel(), () -> this.receiver);
             case ERROR_TOPIC:
                 if (ic.getConsumerErrorTopic().isEmpty()) {
                     throw ex.illegalArgumentInvalidFailureStrategy(strategy);
                 }
                 return new SolaceErrorTopic(ic.getChannel(), ic.getConsumerErrorTopic().get(),
                         ic.getConsumerErrorMessageDmqEligible(), ic.getConsumerErrorMessageTtl().orElse(null),
-                        ic.getConsumerErrorMessageMaxDeliveryAttempts(), receiver, solace);
+                        ic.getConsumerErrorMessageMaxDeliveryAttempts(), () -> this.receiver, solace);
             default:
                 throw ex.illegalArgumentInvalidFailureStrategy(strategy);
         }
@@ -230,7 +328,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
 
     public void waitForUnAcknowledgedMessages() {
         try {
-            receiver.pause();
+            this.receiver.pause();
             SolaceLogging.log.infof("Waiting for incoming channel %s messages to be acknowledged", channel);
             if (!unacknowledgedMessageTracker.awaitEmpty(this.gracefulShutdownWaitTimeout, TimeUnit.MILLISECONDS)) {
                 SolaceLogging.log.infof("Timed out while waiting for the" +
@@ -260,7 +358,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
                 this.pollerThread.shutdownNow();
             }
         }
-        receiver.terminate(3000);
+        this.receiver.terminate(3000);
     }
 
     public void isStarted(HealthReport.HealthReportBuilder builder) {
@@ -268,7 +366,7 @@ public class SolaceIncomingChannel implements ReceiverActivationPassivationConfi
     }
 
     public void isReady(HealthReport.HealthReportBuilder builder) {
-        builder.add(channel, solace.isConnected() && receiver != null && receiver.isRunning());
+        builder.add(channel, solace.isConnected() && this.receiver != null && this.receiver.isRunning());
     }
 
     public void isAlive(HealthReport.HealthReportBuilder builder) {
