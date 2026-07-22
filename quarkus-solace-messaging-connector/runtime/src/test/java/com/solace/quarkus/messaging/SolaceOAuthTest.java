@@ -66,8 +66,6 @@ public class SolaceOAuthTest {
 
         solaceContainer.start();
         await().until(() -> solaceContainer.isRunning());
-
-        Thread.sleep(300000000);
     }
 
     private static KeyStore createKeyStore(byte[] ca, byte[] serviceCa) {
