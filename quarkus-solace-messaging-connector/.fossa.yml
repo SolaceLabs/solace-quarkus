@@ -1,0 +1,21 @@
+version: 3
+project:
+  locator: SolaceProducts_quarkus-solace-messaging-connector
+  id: SolaceProducts_quarkus-solace-messaging-connector
+  name: quarkus-solace-messaging-connector
+  teams: []
+  labels:
+    - java
+vendoredDependencies:
+  forceRescans: false
+  scanMethod: CLILicenseScan
+  licenseScanPathFilters:
+    exclude:
+      - "./.git"
+      - "./.github"
+paths:
+  exclude:
+    - ./.git
+    - ./.github
+telemetry:
+  scope: full
