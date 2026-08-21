@@ -14,22 +14,9 @@ permissions:
 
 jobs:
   sca_scan:
-    strategy:
-      matrix:
-        include:
-          - path: quarkus-solace-client
-            name: quarkus-solace-client
-          - path: quarkus-solace-jcsmp-client
-            name: quarkus-solace-jcsmp-client
-          - path: quarkus-solace-messaging-connector
-            name: quarkus-solace-messaging-connector
-          - path: quarkus-solace-jcsmp-messaging-connector
-            name: quarkus-solace-jcsmp-messaging-connector
     uses: SolaceDev/solace-public-workflows/.github/workflows/sca-scan-and-guard.yaml@main
     with:
       config_file: '.github/workflow-config.json'
-      additional_scan_params: |
-        fossa.only_path=${{ matrix.path }}
     secrets:
       FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
 

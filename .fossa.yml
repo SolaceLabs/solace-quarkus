@@ -1,8 +1,8 @@
 version: 3
 project:
-  locator: SolaceProducts_quarkus-solace-jcsmp-client
-  id: SolaceProducts_quarkus-solace-jcsmp-client
-  name: quarkus-solace-jcsmp-client
+  locator: SolaceProducts_solace-quarkus
+  id: SolaceProducts_solace-quarkus
+  name: solace-quarkus
   teams: []
   labels:
     - java
