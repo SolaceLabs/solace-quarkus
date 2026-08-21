@@ -24,13 +24,6 @@ jobs:
     needs: sca_scan
     if: needs.sca_scan.result == 'success' && github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - name: quarkus-solace-client
-          - name: quarkus-solace-jcsmp-client
-          - name: quarkus-solace-messaging-connector
-          - name: quarkus-solace-jcsmp-messaging-connector
     permissions:
       id-token: write
       contents: read
@@ -52,7 +45,7 @@ jobs:
           ddb_item_to_be_added: |
             {
               "squad": "connectors-coe",
-              "repository": "${{ matrix.name }}",
+              "repository": "${{ github.event.repository.name }}",
               "dev": {
                 "sha": "${{ github.sha }}",
                 "version": "${{ github.ref_name }}"
