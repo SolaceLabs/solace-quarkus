@@ -1,7 +1,8 @@
-name: SCA Scan on merge to main
+name: SCA Scan
 on:
   push:
     branches: [main]
+  pull_request:
 
 permissions:
   contents: read
@@ -44,7 +45,7 @@ jobs:
           ddb_sort_key: repository
           ddb_item_to_be_added: |
             {
-              "squad": "connectors-coe",
+              "squad": "connectors-core",
               "repository": "${{ github.event.repository.name }}",
               "dev": {
                 "sha": "${{ github.sha }}",
