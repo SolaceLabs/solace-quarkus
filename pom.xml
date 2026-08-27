@@ -41,7 +41,7 @@
     <solace.version>1.8.2</solace.version>
     <solace.jcsmp.version>10.28.2</solace.jcsmp.version>
 
-    <assertj-core.version>3.24.2</assertj-core.version>
+    <assertj-core.version>3.27.6</assertj-core.version>
     <weld.version>5.1.2.Final</weld.version>
     <testcontainers-solace.version>1.18.3</testcontainers-solace.version>
     <slf4j-log4j12.version>2.0.7</slf4j-log4j12.version>
