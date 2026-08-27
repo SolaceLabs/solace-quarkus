@@ -1,6 +1,7 @@
 package com.solace.quarkus.messaging.fault;
 
 import java.util.concurrent.CompletionStage;
+import java.util.function.Supplier;
 
 import org.eclipse.microprofile.reactive.messaging.Metadata;
 
@@ -14,9 +15,11 @@ import io.smallrye.mutiny.Uni;
 
 public class SolaceFail implements SolaceFailureHandler {
     private final String channel;
-    private final AcknowledgementSupport ackSupport;
+    // Supplier so the handler always targets the current receiver, which is
+    // rebuilt on reconnect (DATAGO-141425).
+    private final Supplier<AcknowledgementSupport> ackSupport;
 
-    public SolaceFail(String channel, AcknowledgementSupport ackSupport) {
+    public SolaceFail(String channel, Supplier<AcknowledgementSupport> ackSupport) {
         this.channel = channel;
         this.ackSupport = ackSupport;
     }
@@ -35,8 +38,9 @@ public class SolaceFail implements SolaceFailureHandler {
         SolaceLogging.log.messageSettled(channel, outcome.toString().toLowerCase(), reason.getMessage());
         return Uni.createFrom().voidItem()
                 .invoke(() -> {
-                    if (ackSupport != null) {
-                        ackSupport.settle(msg.getMessage(), outcome);
+                    AcknowledgementSupport support = ackSupport.get();
+                    if (support != null) {
+                        support.settle(msg.getMessage(), outcome);
                     }
                 })
                 .runSubscriptionOn(msg::runOnMessageContext)

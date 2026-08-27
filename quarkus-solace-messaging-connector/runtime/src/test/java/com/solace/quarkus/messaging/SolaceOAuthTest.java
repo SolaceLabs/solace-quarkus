@@ -47,7 +47,7 @@ public class SolaceOAuthTest {
     private static SolaceContainer solaceContainer;
 
     @BeforeAll
-    static void startContainers() {
+    static void startContainers() throws InterruptedException {
         keyCloakContainer = new KeyCloakContainer();
         keyCloakContainer.start();
         keyCloakContainer.createHostsFile();

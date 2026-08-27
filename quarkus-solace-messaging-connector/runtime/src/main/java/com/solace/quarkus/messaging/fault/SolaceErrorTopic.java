@@ -2,6 +2,7 @@ package com.solace.quarkus.messaging.fault;
 
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Supplier;
 
 import org.eclipse.microprofile.reactive.messaging.Metadata;
 
@@ -13,7 +14,9 @@ import com.solace.quarkus.messaging.incoming.SolaceInboundMessage;
 
 public class SolaceErrorTopic implements SolaceFailureHandler {
     private final String channel;
-    private final AcknowledgementSupport ackSupport;
+    // Supplier so the handler always targets the current receiver, which is
+    // rebuilt on reconnect (DATAGO-141425).
+    private final Supplier<AcknowledgementSupport> ackSupport;
 
     private final SolaceErrorTopicPublisherHandler solaceErrorTopicPublisherHandler;
     private final long maxDeliveryAttempts;
@@ -22,7 +25,7 @@ public class SolaceErrorTopic implements SolaceFailureHandler {
     private final Long timeToLive;
 
     public SolaceErrorTopic(String channel, String errorTopic, boolean dmqEligible, Long timeToLive, long maxDeliveryAttempts,
-            AcknowledgementSupport ackSupport, MessagingService solace) {
+            Supplier<AcknowledgementSupport> ackSupport, MessagingService solace) {
         this.channel = channel;
         this.errorTopic = errorTopic;
         this.dmqEligible = dmqEligible;
@@ -41,8 +44,9 @@ public class SolaceErrorTopic implements SolaceFailureHandler {
                     SolaceLogging.log.messageSettled(channel,
                             MessageAcknowledgementConfiguration.Outcome.ACCEPTED.toString().toLowerCase(),
                             "Message is published to error topic and acknowledged on queue.");
-                    if (ackSupport != null) {
-                        ackSupport.settle(msg.getMessage(), MessageAcknowledgementConfiguration.Outcome.ACCEPTED);
+                    AcknowledgementSupport support = ackSupport.get();
+                    if (support != null) {
+                        support.settle(msg.getMessage(), MessageAcknowledgementConfiguration.Outcome.ACCEPTED);
                     }
                 })
                 .replaceWithVoid()
